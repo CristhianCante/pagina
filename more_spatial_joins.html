@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo: Más Joins Espaciales - Guía de PostGIS Bogotá</title>
+    <!-- Tailwind CSS para un diseño rápido y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .text-gradient {
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        /* Estilos para el contenido del artículo */
+        .article-content h2 {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 800; /* extrabold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2.5rem; /* mt-10 */
+            margin-bottom: 1rem; /* mb-4 */
+            border-bottom: 2px solid #e5e7eb; /* border-gray-200 */
+            padding-bottom: 0.5rem; /* pb-2 */
+        }
+        .article-content h3 {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 700; /* bold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2rem; /* mt-8 */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .article-content p, .article-content ul, .article-content ol {
+            font-size: 1.125rem; /* text-lg */
+            color: #374151; /* gray-700 */
+            line-height: 1.75;
+            margin-bottom: 1rem;
+        }
+        .article-content ul {
+            list-style-type: disc;
+            padding-left: 2rem;
+        }
+        .article-content a {
+            color: #2563eb; /* blue-600 */
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .article-content a:hover {
+            color: #1d4ed8; /* blue-800 */
+            text-decoration: underline;
+        }
+        .article-content code:not(.hljs) { /* Código inline */
+            background-color: #e5e7eb;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .code-block-container {
+            position: relative;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .copy-button {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background-color: #4b5563;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 1px solid #6b7280;
+        }
+        .copy-button:hover {
+            background-color: #374151;
+        }
+        .copy-button.copied {
+            background-color: #16a34a; /* green-600 */
+        }
+        .styled-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        .styled-table th, .styled-table td {
+            border: 1px solid #d1d5db;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        .styled-table th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+        }
+        .styled-table tbody tr:nth-child(odd) {
+            background-color: #f9fafb;
+        }
+    </style>
+    <!-- Highlight.js para el resaltado de sintaxis SQL -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        <!-- ===== NAVEGACIÓN DE VUELTA ===== -->
+        <nav class="mb-6">
+            <a href="pagina.html" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200 text-lg">
+                &larr; Volver a la página principal de la guía
+            </a>
+        </nav>
+
+        <!-- ===== CABECERA DEL MÓDULO ===== -->
+        <header class="mb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-2">
+                Más Joins Espaciales: Del Dato al Análisis
+            </h1>
+            <p class="text-xl text-gray-600">
+                Utilizando uniones espaciales para responder preguntas complejas y validar hipótesis con datos de Bogotá.
+            </p>
+        </header>
+
+        <article class="bg-white p-6 sm:p-8 lg:p-12 rounded-xl shadow-md border border-gray-200 article-content">
+            
+            <!-- ===== DEFINICIÓN DE JOIN ESPACIAL ===== -->
+            <h2>Definición de Join Espacial Ordinario</h2>
+            <p>
+                Un <strong>Join Espacial</strong> es una operación fundamental en las bases de datos espaciales que permite unir registros de dos tablas basándose en la <strong>relación espacial</strong> entre sus geometrías, en lugar de una columna con valores comunes como en un <code>JOIN</code> de SQL tradicional.
+            </p>
+            <p>
+                En esencia, un Join Espacial combina los atributos de dos capas geográficas diferentes cuando sus geometrías cumplen una condición espacial específica. Estas condiciones se evalúan mediante funciones espaciales (predicados espaciales), siendo las más comunes:
+            </p>
+            <ul>
+                <li><code>ST_Intersects</code>: Las geometrías se tocan o cruzan en cualquier punto.</li>
+                <li><code>ST_Contains</code>: La geometría de la primera tabla contiene completamente a la geometría de la segunda.</li>
+                <li><code>ST_Within</code>: La geometría de la primera tabla está completamente dentro de la geometría de la segunda.</li>
+                <li><code>ST_DWithin</code>: La geometría de la primera tabla se encuentra a una distancia específica de la geometría de la segunda.</li>
+            </ul>
+            <p>
+                Este tipo de operación es un pilar en el análisis geoespacial y es el primer paso para responder preguntas complejas.
+            </p>
+
+            <!-- ===== CREACIÓN DE LA BASE DE DATOS ===== -->
+            <h2>1. Creación de una Base de Datos de Interés</h2>
+            <p>
+                Con la finalidad de poder realizar consultas cuya respuesta atienda a preguntas de carácter no tan superficial, construiremos una base de datos más elaborada que nos brinde la capacidad de responder interrogantes de índole social o demográfico más interesantes.
+            </p>
+            
+            <h3>1.1. Obtención de los datos</h3>
+            <p>
+                Para este ejemplo, se utilizará la base de datos de la <a href="https://sdp.gov.co/gestion-estudios-estrategicos/informacion-estadisticas/encuesta-multiproposito/microdatos" target="_blank" rel="noopener noreferrer"><strong>Encuesta Multipropósito</strong> de la Secretaría Distrital de Planeación</a> de Bogotá.
+            </p>
+            <img src="imagenes/Mas Joins espaciales/encuesta_multiproposito.png" alt="[Imagen de la página de descarga de datos de la Encuesta Multipropósito]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+            
+            <h3>1.2. Importación de los datos</h3>
+            <p>
+                Primero, creamos en nuestra base de datos una tabla receptora para los datos de la encuesta. Es importante definir correctamente los tipos de dato para cada columna.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+                <img src="imagenes/Mas Joins espaciales/creacion_tabla.png" alt="[Imagen de la creación de una nueva tabla en pgAdmin]" class="rounded-lg shadow-md border">
+                <img src="imagenes/Mas Joins espaciales/Tipos_de_dato.png" alt="[Imagen de la definición de columnas y tipos de datos en pgAdmin]" class="rounded-lg shadow-md border">
+            </div>
+            <p>
+                Posteriormente, usamos la herramienta de importación de pgAdmin, asegurándonos de configurar correctamente el delimitador y de indicar si el archivo CSV tiene encabezado.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+                <img src="imagenes/Mas Joins espaciales/importación.png" alt="[Imagen de la creación de una nueva tabla en pgAdmin]" class="rounded-lg shadow-md border">
+                <img src="imagenes/Mas Joins espaciales/encabezados.png" alt="[Imagen de la definición de columnas y tipos de datos en pgAdmin]" class="rounded-lg shadow-md border">
+            </div>
+
+            <h3>1.3. Adaptación de los datos</h3>
+            <p>
+                Dado que incluimos una base de datos alfanumérica sin elementos espaciales, es necesario realizar transformaciones para poder usarla en análisis geográficos. Primero, eliminamos registros con valores nulos en columnas clave.
+            </p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">DELETE FROM Bogota_temp
+WHERE
+    "Estrato" IS NULL OR
+    "IluNoct" IS NULL OR
+    "Drogas" IS NULL OR
+    "Inseguridad" IS NULL OR
+    "NivEdu" IS NULL;</code></pre>
+            </div>
+            
+            <p>
+                Luego, creamos una tabla temporal procesando los datos originales para convertirlos en indicadores binarios (0 o 1) o categóricos, lo que facilitará los cálculos posteriores.
+            </p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">CREATE TEMP TABLE Bogota_procesada AS
+SELECT
+    CASE WHEN "Drogas" = '1' THEN 1 ELSE 0 END AS "SiDrogas",
+    CASE WHEN "Inseguridad" = '1' THEN 1 ELSE 0 END AS "SiInseguridad",
+    CASE WHEN CAST("Estrato" AS INTEGER) >= 4 THEN 1 ELSE 0 END AS "EstratoAlto",
+    CASE WHEN CAST("NivEdu" AS INTEGER) >= 9 THEN 1 ELSE 0 END AS "EduSup",
+    "Cod_UPZ", "Cod_Localidad", "Nombre_Loc", "Nombre_UPZ"
+FROM
+    Bogota_temp;</code></pre>
+            </div>
+
+            <p>
+                Agregamos los datos al nivel de UPZ (Unidad de Planeamiento Zonal) para poder unirlos con la capa geográfica de UPZ. Calculamos el promedio de nuestros indicadores, que ahora representan porcentajes.
+            </p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">CREATE TABLE resumen_upz AS
+SELECT
+    "Cod_UPZ",
+    "Cod_Localidad",
+    "Nombre_Loc",
+    "Nombre_UPZ",
+    AVG("SiDrogas") * 100 AS porcentaje_drogas,
+    AVG("SiInseguridad") * 100 AS porcentaje_inseguridad,
+    AVG("EstratoAlto") * 100 AS porcentaje_estratoalto,
+    AVG("EduSup") * 100 AS porcentaje_edusup
+FROM
+    Bogota_procesada
+GROUP BY
+    "Cod_UPZ", "Cod_Localidad", "Nombre_Loc", "Nombre_UPZ";</code></pre>
+            </div>
+
+            <p>
+                Nos aseguramos de que la columna de unión en nuestra capa geográfica (`upz_kennedy`) tenga el tipo de dato correcto.
+            </p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">ALTER TABLE upz_kennedy
+ALTER COLUMN "CODIGO_UPZ" TYPE INTEGER
+USING "CODIGO_UPZ"::integer;</code></pre>
+            </div>
+
+            <p>
+                Finalmente, realizamos el <code>LEFT JOIN</code> para unir nuestros indicadores sociodemográficos (de `resumen_upz`) con la capa espacial de las UPZ de Kennedy.
+            </p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">CREATE TABLE upz_kennedy_con_indices AS
+SELECT
+    u.*, -- Selecciona todas las columnas de la tabla de geometrías
+    r.porcentaje_drogas,
+    r.porcentaje_inseguridad,
+    r.porcentaje_estratoalto,
+    r.porcentaje_edusup
+FROM
+    upz_kennedy u
+LEFT JOIN
+    resumen_upz r ON u."CODIGO_UPZ" = r."Cod_UPZ";</code></pre>
+            </div>
+
+            <!-- ===== CONSULTA SOBRE EDUCACIÓN ===== -->
+            <h2>2. Consulta sobre Educación</h2>
+            <p>
+                Para poner a prueba nuestra nueva tabla, respondamos a la pregunta: <strong>¿Cuáles son los barrios de la localidad de Kennedy que pertenecen a la UPZ con mayor nivel de educación superior?</strong>
+            </p>
+            <p>
+                Esto requiere un Join Espacial entre nuestra nueva capa de UPZ con indicadores y la capa de barrios. Usamos una subconsulta para encontrar primero la UPZ con el máximo `porcentaje_edusup`.
+            </p>
+            
+            <h3>2.1. Método 1: Usando ST_Intersects</h3>
+            <p>
+                Este método seleccionará todos los barrios que toquen o crucen la UPZ de interés.
+            </p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT
+    b.barriocomu AS nombre_barrio,
+    u."NOMBRE" AS nombre_upz,
+    u.porcentaje_edusup AS porcentaje_educacion_superior
+FROM
+    upz_kennedy_con_indices u
+JOIN
+    kenn_barr b ON ST_Intersects(b.geom, u.geom)
+WHERE
+    u."NOMBRE" = (
+        SELECT "NOMBRE"
+        FROM upz_kennedy_con_indices
+        WHERE porcentaje_edusup IS NOT NULL
+        ORDER BY porcentaje_edusup DESC
+        LIMIT 1
+    );</code></pre>
+            </div>
+            <p>El resultado de la consulta arroja los siguientes barrios:</p>
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th>nombre_barrio</th>
+                        <th>nombre_upz</th>
+                        <th>porcentaje_educacion_superior</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Bavaria I Sector</td><td>AMERICAS</td><td>32.38</td></tr>
+                    <tr><td>Glorieta de las Americas</td><td>AMERICAS</td><td>32.38</td></tr>
+                    <tr><td>Santa Rosa del Carvajal</td><td>AMERICAS</td><td>32.38</td></tr>
+                    <tr><td>El Triángulo</td><td>AMERICAS</td><td>32.38</td></tr>
+                    <tr><td>La Igualdad</td><td>AMERICAS</td><td>32.38</td></tr>
+                    <tr><td>Mandalay</td><td>AMERICAS</td><td>32.38</td></tr>
+                    <tr><td>Techo</td><td>AMERICAS</td><td>32.38</td></tr>
+                </tbody>
+            </table>
+
+            <h3>2.2. Método 2: Usando ST_Contains con ST_Centroid</h3>
+            <p>
+                Para un análisis más estricto, podemos seleccionar solo aquellos barrios cuyo centroide esté contenido dentro de la UPZ. Esto evita incluir barrios que solo tocan el borde.
+            </p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT
+    b.barriocomu AS nombre_barrio,
+    u."NOMBRE" AS nombre_upz,
+    u.porcentaje_edusup AS porcentaje_educacion_superior
+FROM
+    upz_kennedy_con_indices u
+JOIN
+    kenn_barr b ON ST_Contains(u.geom, ST_Centroid(b.geom))
+WHERE
+    u."NOMBRE" = (
+        SELECT "NOMBRE"
+        FROM upz_kennedy_con_indices
+        WHERE porcentaje_edusup IS NOT NULL
+        ORDER BY porcentaje_edusup DESC
+        LIMIT 1
+    );</code></pre>
+            </div>
+            <p>El resultado obtenido es el siguiente:</p>
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th>nombre_barrio</th>
+                        <th>nombre_upz</th>
+                        <th>porcentaje_educacion_superior</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Glorieta de las Americas</td><td>AMERICAS</td><td>32.38</td></tr>
+                    <tr><td>Santa Rosa del Carvajal</td><td>AMERICAS</td><td>32.38</td></tr>
+                    <tr><td>Milenta II Sector</td><td>AMERICAS</td><td>32.38</td></tr>
+                    <tr><td>Centro Americas</td><td>AMERICAS</td><td>32.38</td></tr>
+                    <tr><td>La Igualdad</td><td>AMERICAS</td><td>32.38</td></tr>
+                    <tr><td>Mandalay</td><td>AMERICAS</td><td>32.38</td></tr>
+                </tbody>
+            </table>
+            <p>
+                Como se puede observar, aunque la finalidad de ambas consultas es responder la misma pregunta, existen dos maneras de hacerlo con dos respuestas potencialmente diferentes, dependiendo del rigor espacial que se requiera. En este caso, el método `ST_Contains` es más restrictivo y devuelve menos barrios.
+            </p>
+
+            <!-- ===== HIPÓTESIS ===== -->
+            <h2>3. Hipótesis: Transmilenio y Percepción de Inseguridad</h2>
+            <p>
+                Se propone la hipótesis de que las personas tienden a sentirse más inseguras cuando hay una estación de Transmilenio cerca. Para analizar esto, consultamos: <strong>¿Es la UPZ con mayor número de estaciones de Transmilenio la que presenta mayor sensación de inseguridad?</strong>
+            </p>
+            <p>
+                Para ello, contamos el número de estaciones por UPZ y lo comparamos con el indicador de percepción de inseguridad.
+            </p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT
+    u."NOMBRE" AS nombre_upz,
+    COUNT(e.id) AS numero_estaciones,
+    u.porcentaje_inseguridad
+FROM
+    upz_kennedy_con_indices u
+JOIN
+    kenn_estransr e ON ST_Contains(u.geom, e.geom)
+WHERE
+    u.porcentaje_inseguridad IS NOT NULL
+GROUP BY
+    u."NOMBRE", u.porcentaje_inseguridad
+ORDER BY
+    numero_estaciones DESC;</code></pre>
+            </div>
+
+            <p>El resultado es el siguiente:</p>
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th>nombre_upz</th>
+                        <th>numero_estaciones</th>
+                        <th>porcentaje_inseguridad</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>AMERICAS</td>
+                        <td>6</td>
+                        <td>64.83</td>
+                    </tr>
+                    <tr>
+                        <td>CARVAJAL</td>
+                        <td>2</td>
+                        <td>82.97</td>
+                    </tr>
+                     <tr>
+                        <td>CORABASTOS</td>
+                        <td>1</td>
+                        <td>91.60</td>
+                    </tr>
+                    <tr>
+                        <td>LAS MARGARITAS</td>
+                        <td>1</td>
+                        <td>73.47</td>
+                    </tr>
+                    <tr>
+                        <td>PATIO BONITO</td>
+                        <td>1</td>
+                        <td>86.21</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <p>
+                Como resulta evidente, la UPZ con mayor número de estaciones (Américas) no es la que presenta mayor percepción de inseguridad (Corabastos). Con estos datos, la hipótesis propuesta no se sostiene para la localidad de Kennedy. Se deja abierta la posibilidad de que un estudio más amplio, que abarque toda la ciudad o incluya otras variables, pueda arrojar resultados diferentes.
+            </p>
+        </article>
+        
+        <!-- ===== PIE DE PÁGINA ===== -->
+        <footer class="text-center mt-16 pt-8 border-t border-gray-300">
+            <p class="text-gray-600">&copy; 2024 Universidad Distrital Francisco José de Caldas. Todos los derechos reservados.</p>
+            <p class="text-sm text-gray-500 mt-1">Este material se distribuye bajo la licencia Creative Commons Atribución-CompartirIgual.</p>
+        </footer>
+    </div>
+    <script>
+        // Inicializa Highlight.js para resaltar todos los bloques de código
+        hljs.highlightAll();
+
+        // Agrega la funcionalidad de copiado a todos los botones
+        const copyButtons = document.querySelectorAll('.copy-button');
+        copyButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const pre = button.parentElement.querySelector('pre > code');
+                const textToCopy = pre.innerText;
+
+                // Usamos un textarea temporal para copiar el texto
+                const textArea = document.createElement('textarea');
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    button.innerText = 'Copiado!';
+                    button.classList.add('copied');
+                } catch (err) {
+                    console.error('Error al copiar el texto: ', err);
+                    button.innerText = 'Error';
+                }
+                document.body.removeChild(textArea);
+
+                // Revertir el texto del botón después de 2 segundos
+                setTimeout(() => {
+                    button.innerText = 'Copiar';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>

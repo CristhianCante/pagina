@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía de PostGIS - Aplicado a Datos de Bogotá D.C.</title>
+    <!-- Tailwind CSS para un diseño rápido y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Usar la fuente Inter como predeterminada */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Pequeño ajuste para el degradado del título */
+        .text-gradient {
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        <!-- ===== SECCIÓN DE CABECERA Y TÍTULO ===== -->
+        <header class="mb-12 text-center">
+            <div class="flex justify-center items-center space-x-6 mb-6">
+                <!-- Placeholder para el logo de la Universidad -->
+                <img src="imagenes/pagina principal/logo_de_carrera.png" alt="Logo Universidad Distrital" class="h-20 w-20 object-contain">
+                
+                <!-- Placeholder para el logo de la Facultad/Carrera -->
+                <img src="imagenes/pagina principal/logo_UD.png" alt="Logo Facultad de Ingeniería" class="h-20 w-20 object-contain">
+            </div>
+
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-2">
+                Guía de Entrenamiento PostGIS
+            </h1>
+            <p class="text-2xl font-semibold bg-gradient-to-r from-blue-600 to-teal-500 text-gradient">
+                Aplicaciones con Datos de Bogotá D.C.
+            </p>
+            <div class="mt-4 text-gray-600">
+                <p class="font-semibold">Universidad Distrital Francisco José de Caldas</p>
+                <p>Facultad de Ingeniería - Ingeniería Catastral y Geodesia</p>
+            </div>
+        </header>
+
+        <main>
+            <!-- ===== SECCIÓN DE INTRODUCCIÓN ===== -->
+            <section id="introduccion" class="mb-16 bg-white p-8 rounded-xl shadow-md border border-gray-200">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Acerca de esta Guía</h2>
+                <p class="text-lg text-gray-700 leading-relaxed">
+                    Esta guía de trabajo es una adaptación del material de entrenamiento de PostGIS, contextualizada con datos geoespaciales abiertos del Distrito Capital de Bogotá. El objetivo es ofrecer un recurso de aprendizaje práctico y profundo, enfocado en los desafíos y aplicaciones relevantes para la ingeniería catastral, la planeación urbana y la geodesia en nuestro entorno local. Este material ha sido desarrollado como un proyecto académico para fortalecer las competencias en sistemas de información geográfica y bases de datos espaciales.
+                </p>
+            </section>
+
+            <!-- ===== SECCIÓN DE PRIMEROS PASOS ===== -->
+            <section id="primeros-pasos" class="mb-16">
+                <h2 class="text-3xl font-bold text-gray-900 mb-6 text-center">Primeros Pasos</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                    <!-- Tarjeta de Paquete de Datos -->
+                    <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300">
+                        <div class="flex items-center text-blue-600 mb-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 mr-3"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            <h3 class="text-xl font-bold">Paquete de Datos</h3>
+                        </div>
+                        <p class="text-gray-600">Descarga el paquete completo con todos los datos de Bogotá (capas, cartografía, etc.) necesarios para seguir los ejercicios.</p>
+                        <a href="backups.zip" class="inline-block mt-4 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">Descargar .zip</a>
+                    </div>
+                    <!-- Tarjeta de Presentaciones -->
+                    <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300">
+                         <div class="flex items-center text-teal-600 mb-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8 mr-3"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            <h3 class="text-xl font-bold">Presentaciones</h3>
+                        </div>
+                        <p class="text-gray-600">Descarga las diapositivas de apoyo que acompañan cada módulo del taller, con explicaciones teóricas y conceptuales.</p>
+                         <a href="presentaciones.zip" class="inline-block mt-4 bg-teal-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-teal-700 transition-colors">Descargar .zip</a>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- ===== SECCIÓN DE MÓDULOS DEL TALLER ===== -->
+            <section id="modulos">
+                <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">Módulos del Taller</h2>
+                <div class="bg-white p-8 rounded-xl shadow-md border border-gray-200">
+                    <ol class="list-decimal list-inside space-y-3 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-lg">
+                        <li><a href="#" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">Bienvenida e Introducción</a></li>
+                        <li><a href="#" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">Instalación de PostgreSQL y PostGIS</a></li>
+                        <li><a href="#" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">Creación de una Base de Datos Espacial</a></li>
+                        <li><a href="#" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">Carga de Datos Espaciales (Shapefiles, GeoJSON de Bogotá)</a></li>
+                        <li><a href="#" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">Análisis de Nuestros Datos: Localidades, UPZ, Red Vial</a></li>
+                        <li><a href="#" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">SQL Básico: Consultas a la base de datos de Bogotá</a></li>
+                        <li><a href="#" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">Tipos de Datos Geométricos (Geometries)</a></li>
+                        <li><a href="#" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">Ejercicios con Geometrías de Bogotá</a></li>
+                        <li><a href="#" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">Relaciones Espaciales (Intersects, Touches, Within)</a></li>
+                        <li><a href="#" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">Ejercicios de Relaciones Espaciales</a></li>
+                        <li><a href="#" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">Uniones Espaciales (Spatial Joins)</a></li>
+                        <li><strong><a href="#" class="text-indigo-700 hover:text-indigo-900 hover:underline transition-colors duration-200">Ejemplo Práctico: ¿Qué parques están en cada localidad?</a></strong></li>
+                        <li><a href="#" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">Índices Espaciales y su importancia</a></li>
+                        <li><a href="#" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">Proyección y Sistemas de Coordenadas (MAGNA-SIRGAS)</a></li>
+                        <li><a href="#" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">Ejercicios de Reproyección de Datos</a></li>
+                        <li><a href="#" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">El tipo de dato Geografía</a></li>
+                        <li><a href="#" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">Ejercicios con el tipo Geography</a></li>
+                        <li><a href="#" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">Funciones de Construcción de Geometrías</a></li>
+                        <li><strong><a href="#" class="text-indigo-700 hover:text-indigo-900 hover:underline transition-colors duration-200">Ejemplo Práctico: Creando áreas de influencia para estaciones de Transmilenio</a></strong></li>
+                        <li><a href="funciones_de_construccion_de_geometrias.html" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">Funciones de construcción de geometrias</a>/<a href="#" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">Geometry Constructing Functions</a></li>
+                        <li><a href="#" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">Funciones de Medición y Distancia</a></li>
+                        <li><strong><a href="more_spatial_joins.html" class="text-indigo-700 hover:text-indigo-900 hover:underline transition-colors duration-200">Más Joins espaciales</a></strong></li>
+                        <li><strong><a href="#" class="text-indigo-700 hover:text-indigo-900 hover:underline transition-colors duration-200">Ejemplo Práctico: Localización de equipamientos urbanos</a></strong></li>
+                        <li><strong><a href="#" class="text-indigo-700 hover:text-indigo-900 hover:underline transition-colors duration-200">Introducción al Análisis de Catastro Multipropósito con PostGIS</a></strong></li>
+                        <li><strong><a href="#" class="text-indigo-700 hover:text-indigo-900 hover:underline transition-colors duration-200">Visualización de Datos Geográficos de Bogotá con QGIS y DBeaver</a></strong></li>
+                        <li><a href="#" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">Apéndice A: Referencia de Funciones</a></li>
+                        <li><a href="#" class="text-blue-700 hover:text-blue-900 hover:underline transition-colors duration-200">Apéndice B: Glosario de Términos</a></li>
+                    </ol>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- ===== PIE DE PÁGINA ===== -->
+        <footer class="text-center mt-16 pt-8 border-t border-gray-300">
+            <p class="text-gray-600">&copy; 2024 Universidad Distrital Francisco José de Caldas. Todos los derechos reservados.</p>
+            <p class="text-sm text-gray-500 mt-1">Este material se distribuye bajo la licencia Creative Commons Atribución-CompartirIgual.</p>
+        </footer>
+
+    </div>
+
+</body>
+</html>
