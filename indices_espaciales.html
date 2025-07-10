@@ -200,8 +200,9 @@ FROM barrios b
 JOIN incidentes i ON ST_Contains(b.geom, i.geom)
 GROUP BY b.nombre;</code></pre>
             </div>
+            <img src="imagenes/indices espaciales/imagen3.png" alt="Resultado de la consulta" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
             <p>El plan de ejecución mostrará un "Seq Scan" (escaneo secuencial) en ambas tablas y un tiempo de ejecución relativamente alto. Por ejemplo: <strong>Execution Time: 19.564 ms</strong>.</p>
-            
+            <img src="imagenes/indices espaciales/imagen4.png" alt="Query plan explicado" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
             <h4>Con Índice Espacial:</h4>
             <p>Ahora, creamos el índice y ejecutamos la misma consulta.</p>
             <div class="code-block-container">
@@ -215,7 +216,7 @@ JOIN incidentes i ON ST_Contains(b.geom, i.geom)
 GROUP BY b.nombre;</code></pre>
             </div>
             <p>El nuevo plan de ejecución utilizará un "Index Scan" en la tabla de incidentes. El tiempo de ejecución se reducirá drásticamente. Por ejemplo: <strong>Execution Time: 3.754 ms</strong>. ¡Una mejora de más del 80%!</p>
-
+<img src="imagenes/indices espaciales/imagen5.png" alt="Query plan explicado" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
             <h3>Consulta 2: Operador && vs. ST_Intersects</h3>
             <p>
                 El operador <code>&&</code> es especial porque está diseñado para usar el índice espacial directamente. Comprueba si las <em>bounding boxes</em> de dos geometrías se solapan, no si las geometrías reales lo hacen. Es mucho más rápido, pero menos preciso que <code>ST_Intersects</code>.
@@ -232,7 +233,7 @@ WHERE b.nombre = 'OLAYA'
 GROUP BY b.nombre;</code></pre>
             </div>
             <p>Resultado: <strong>68 incidentes</strong> (incluye aquellos cuya bounding box toca, aunque el punto esté fuera).</p>
-
+<img src="imagenes/indices espaciales/imagen7.png" alt="Resultado de la consulta" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
             <p><strong>Con la función <code>ST_Intersects</code> (más lento, pero exacto):</strong></p>
             <div class="code-block-container">
                 <button class="copy-button">Copiar</button>
@@ -243,6 +244,7 @@ WHERE b.nombre = 'OLAYA'
 GROUP BY b.nombre;</code></pre>
             </div>
             <p>Resultado: <strong>44 incidentes</strong> (solo los que realmente están dentro o tocan la geometría del barrio).</p>
+            <img src="imagenes/indices espaciales/imagen6.png" alt="Resultado de la consulta" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
             <p>La mejor práctica es usar ambos: el operador <code>&&</code> en la cláusula <code>WHERE</code> para hacer un filtro rápido con el índice, y la función espacial exacta en el <code>JOIN</code> o <code>WHERE</code> para el refinamiento.</p>
 
             <h2>4. Mantenimiento de Índices: VACUUM y ANALYZE</h2>
