@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo: Geometrías y Ejercicios de Geometrías - Guía de PostGIS Bogotá</title>
+    <!-- Tailwind CSS para un diseño rápido y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilos para el contenido del artículo */
+        .article-content h2 {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 800; /* extrabold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2.5rem; /* mt-10 */
+            margin-bottom: 1rem; /* mb-4 */
+            border-bottom: 2px solid #e5e7eb; /* border-gray-200 */
+            padding-bottom: 0.5rem; /* pb-2 */
+        }
+        .article-content h3 {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 700; /* bold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2rem; /* mt-8 */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .article-content p, .article-content ul, .article-content ol {
+            font-size: 1.125rem; /* text-lg */
+            color: #374151; /* gray-700 */
+            line-height: 1.75;
+            margin-bottom: 1rem;
+        }
+        .article-content ul {
+            list-style-type: disc;
+            padding-left: 2rem;
+        }
+        .article-content a {
+            color: #2563eb; /* blue-600 */
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .article-content a:hover {
+            color: #1d4ed8; /* blue-800 */
+            text-decoration: underline;
+        }
+        .article-content code:not(.hljs) { /* Código inline */
+            background-color: #e5e7eb;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .code-block-container {
+            position: relative;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .copy-button {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background-color: #4b5563;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 1px solid #6b7280;
+        }
+        .copy-button:hover {
+            background-color: #374151;
+        }
+        .copy-button.copied {
+            background-color: #16a34a; /* green-600 */
+        }
+        .styled-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        .styled-table th, .styled-table td {
+            border: 1px solid #d1d5db;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        .styled-table th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+        }
+        .styled-table tbody tr:nth-child(odd) {
+            background-color: #f9fafb;
+        }
+    </style>
+    <!-- Highlight.js para el resaltado de sintaxis SQL -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        <!-- ===== NAVEGACIÓN DE VUELTA ===== -->
+        <nav class="mb-6">
+            <a href="index.html" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200 text-lg">
+                &larr; Volver a la página principal de la guía
+            </a>
+        </nav>
+
+        <!-- ===== CABECERA DEL MÓDULO ===== -->
+        <header class="mb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-2">
+                Geometrías y Ejercicios de Geometrías
+            </h1>
+            <p class="text-xl text-gray-600">
+                Explorando los tipos de datos espaciales y aplicando funciones de análisis en PostGIS.
+            </p>
+        </header>
+
+        <article class="bg-white p-6 sm:p-8 lg:p-12 rounded-xl shadow-md border border-gray-200 article-content">
+            
+            <h2>1. Fundamentos de las Geometrías</h2>
+            <p>
+                Una <strong>geometría</strong> es un tipo de dato especial que representa la forma, posición y extensión de objetos geográficos. En PostGIS, estos datos se almacenan en una columna de tipo <code>geometry</code>, lo que nos permite realizar consultas espaciales avanzadas.
+            </p>
+            
+            <h3>1.1. Tipos de Geometría</h3>
+            <p>PostGIS soporta una gran variedad de tipos de geometría definidos por el estándar OGC (Open Geospatial Consortium). Los más comunes son:</p>
+            <ul>
+                <li><strong>POINT:</strong> Un punto individual en el espacio, definido por coordenadas (X, Y). Ideal para localizar estaciones, árboles o incidentes.</li>
+                <li><strong>LINESTRING:</strong> Una secuencia de puntos conectados que forman una línea. Se usa para representar ríos, calles o rutas.</li>
+                <li><strong>POLYGON:</strong> Un área cerrada definida por una o más secuencias de puntos (anillos). Representa entidades como barrios, lagos o lotes.</li>
+                <li><strong>MULTI-GEOMETRÍAS (MULTIPOINT, MULTILINESTRING, MULTIPOLYGON):</strong> Colecciones de geometrías del mismo tipo. Por ejemplo, un MULTIPOLYGON para representar un archipiélago.</li>
+                <li><strong>GEOMETRYCOLLECTION:</strong> Un conjunto mixto que puede contener diferentes tipos de geometrías.</li>
+            </ul>
+
+            <h3>1.2. Dimensiones, SRID y Campos</h3>
+            <ul>
+                <li><strong>Dimensión:</strong> Cada geometría tiene una dimensión topológica. Un punto tiene dimensión 0, una línea tiene dimensión 1 y un polígono tiene dimensión 2. La función <code>ST_Dimension()</code> nos permite conocerla.</li>
+                <li><strong>SRID (Spatial Reference System Identifier):</strong> Es un código numérico que identifica el sistema de coordenadas de la geometría. Es obligatorio definirlo correctamente para que las operaciones espaciales (como medir distancias) tengan sentido.</li>
+                <li><strong>Campo Geométrico:</strong> Dentro de una tabla, la columna que almacena la información espacial se conoce como campo geométrico, comúnmente llamado <code>geom</code> o <code>geometria</code>.</li>
+            </ul>
+
+            <h2>2. Flujo de Trabajo: de QGIS a PostGIS</h2>
+            <p>
+                Una metodología común es utilizar un software de escritorio como <strong>QGIS</strong> para crear o preparar los datos y luego importarlos a <strong>PostGIS</strong> para un análisis más robusto y escalable a través de SQL.
+            </p>
+
+            <h3>2.1. Creación de Geometrías en QGIS</h3>
+            <p>
+                Puedes crear geometrías de puntos fácilmente importando un archivo de texto delimitado (CSV) que contenga columnas de coordenadas (latitud y longitud).
+            </p>
+            <img src="imagenes/Geometrias y ejercicios de geometrias/imagen 1.png" alt="[Imagen de la interfaz de QGIS para añadir una capa de texto delimitado]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+            <p>
+                Una vez cargadas las capas en QGIS, puedes exportarlas directamente a tu base de datos PostGIS, asegurándote de definir el nombre de la tabla, el campo geométrico y el SRID correcto.
+            </p>
+
+            <h3>2.2. Creación de Geometrías directamente en PostGIS</h3>
+            <p>
+                También es posible crear la columna de geometría y poblarla directamente en PostGIS si ya tienes una tabla con coordenadas.
+            </p>
+            <p><strong>Paso 1:</strong> Crear una tabla para importar los datos CSV (sin geometría aún).</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">CREATE TABLE huecos_fontibon (
+    objectid INTEGER,
+    id BIGINT,
+    elemento DOUBLE PRECISION,
+    civ TEXT,
+    nom_localidad TEXT,
+    -- ... resto de columnas de atributos
+    coord_x DOUBLE PRECISION,
+    coord_y DOUBLE PRECISION
+);</code></pre>
+            </div>
+            <p>Después de crear la tabla, puedes usar la herramienta de "Import/Export Data" en pgAdmin para cargar los datos desde tu archivo CSV.</p>
+            
+            <p><strong>Paso 2:</strong> Añadir una columna de geometría y poblarla.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">-- Añadir la columna de geometría vacía
+ALTER TABLE huecos_fontibon
+ADD COLUMN geom geometry(Point, 4326);
+
+-- Poblar la nueva columna usando las coordenadas existentes
+UPDATE huecos_fontibon
+SET geom = ST_SetSRID(ST_MakePoint(coord_x, coord_y), 4326)
+WHERE coord_x IS NOT NULL AND coord_y IS NOT NULL;</code></pre>
+            </div>
+            <p>Esta operación crea un punto para cada fila de la tabla usando las columnas <code>coord_x</code> y <code>coord_y</code>, y le asigna el SRID 4326 (WGS 84), que es el estándar para coordenadas geográficas.</p>
+
+            <h2>3. Ejercicios con Funciones Espaciales</h2>
+            <p>
+                Ahora que tenemos datos espaciales en nuestra base de datos, podemos empezar a analizarlos con funciones de PostGIS. Usaremos datos de la localidad de Fontibón como ejemplo.
+            </p>
+
+            <h3>3.1. Inspección de Geometrías</h3>
+            <p>
+                La función <code>ST_AsText(geom)</code> convierte una geometría a su formato WKT (Well-Known Text), lo que nos permite ver sus coordenadas de forma legible.
+            </p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT objectid, nom_localidad, ST_AsText(geom)
+FROM huecos_fontibon
+LIMIT 1000;</code></pre>
+            </div>
+
+            <p>Para obtener una lista de todas las tablas con geometrías en nuestra base de datos, podemos consultar la vista <code>geometry_columns</code>.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT * FROM geometry_columns;</code></pre>
+            </div>
+
+            <h3>3.2. Propiedades de las Geometrías</h3>
+            <p>Podemos extraer propiedades de nuestras geometrías, como su dimensión, número de vértices o coordenadas individuales.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT
+    ST_Dimension(geom) AS dimension,      -- Devuelve 0 para puntos
+    ST_GeometryType(geom) AS tipo_geom,   -- Devuelve 'ST_Point'
+    ST_NPoints(geom) AS num_vertices,     -- Devuelve 1 para puntos simples
+    ST_X(geom) AS coordenada_x,           -- Extrae la coordenada X (longitud)
+    ST_Y(geom) AS coordenada_y            -- Extrae la coordenada Y (latitud)
+FROM huecos_fontibon
+WHERE nom_localidad ILIKE 'FONTIBON'
+LIMIT 1;</code></pre>
+            </div>
+
+            <h3>3.3. Consultas y Visualización</h3>
+            <p>Podemos realizar consultas de atributos y visualizar el resultado geométrico directamente en el "Geometry Viewer" de pgAdmin.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">-- Seleccionar todos los huecos en la localidad de Fontibón
+SELECT *
+FROM huecos_fontibon
+WHERE nom_localidad ILIKE 'FONTIBON';</code></pre>
+            </div>
+            <img src="imagenes/Geometrias y ejercicios de geometrias/imagen 2.png" alt="[Imagen del Geometry Viewer en pgAdmin mostrando puntos en Fontibón]" class="w-full max-w-4xl mx-auto my-4 rounded-lg shadow-md border">
+
+            <p>También podemos realizar consultas de agregación, como obtener una lista única de todas las localidades presentes en nuestros datos.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT DISTINCT nom_localidad
+FROM huecos_fontibon
+ORDER BY nom_localidad;</code></pre>
+            </div>
+            <p>Este tipo de ejercicios son fundamentales para limpiar, validar y entender nuestros datos antes de pasar a análisis más complejos como los joins espaciales.</p>
+
+        </article>
+        
+        <!-- ===== PIE DE PÁGINA ===== -->
+        <footer class="text-center mt-16 pt-8 border-t border-gray-300">
+            <p class="text-gray-600">&copy; 2024 Universidad Distrital Francisco José de Caldas. Todos los derechos reservados.</p>
+            <p class="text-sm text-gray-500 mt-1">Este material se distribuye bajo la licencia Creative Commons Atribución-CompartirIgual.</p>
+        </footer>
+    </div>
+    <script>
+        // Inicializa Highlight.js para resaltar todos los bloques de código
+        hljs.highlightAll();
+
+        // Agrega la funcionalidad de copiado a todos los botones
+        const copyButtons = document.querySelectorAll('.copy-button');
+        copyButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const pre = button.parentElement.querySelector('pre > code');
+                const textToCopy = pre.innerText;
+
+                // Usamos un textarea temporal para copiar el texto
+                const textArea = document.createElement('textarea');
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    button.innerText = 'Copiado!';
+                    button.classList.add('copied');
+                } catch (err) {
+                    console.error('Error al copiar el texto: ', err);
+                    button.innerText = 'Error';
+                }
+                document.body.removeChild(textArea);
+
+                // Revertir el texto del botón después de 2 segundos
+                setTimeout(() => {
+                    button.innerText = 'Copiar';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>

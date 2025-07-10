@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo: Guía Rápida de Análisis Espacial en QGIS - Guía de PostGIS Bogotá</title>
+    <!-- Tailwind CSS para un diseño rápido y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilos para el contenido del artículo */
+        .article-content h2 {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 800; /* extrabold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2.5rem; /* mt-10 */
+            margin-bottom: 1rem; /* mb-4 */
+            border-bottom: 2px solid #e5e7eb; /* border-gray-200 */
+            padding-bottom: 0.5rem; /* pb-2 */
+        }
+        .article-content h3 {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 700; /* bold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2rem; /* mt-8 */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .article-content p, .article-content ul, .article-content ol {
+            font-size: 1.125rem; /* text-lg */
+            color: #374151; /* gray-700 */
+            line-height: 1.75;
+            margin-bottom: 1rem;
+        }
+        .article-content ul {
+            list-style-type: disc;
+            padding-left: 2rem;
+        }
+        .article-content a {
+            color: #2563eb; /* blue-600 */
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .article-content a:hover {
+            color: #1d4ed8; /* blue-800 */
+            text-decoration: underline;
+        }
+        .article-content code:not(.hljs) { /* Código inline */
+            background-color: #e5e7eb;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .code-block-container {
+            position: relative;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .copy-button {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background-color: #4b5563;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 1px solid #6b7280;
+        }
+        .copy-button:hover {
+            background-color: #374151;
+        }
+        .copy-button.copied {
+            background-color: #16a34a; /* green-600 */
+        }
+        .styled-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        .styled-table th, .styled-table td {
+            border: 1px solid #d1d5db;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        .styled-table th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+        }
+        .styled-table tbody tr:nth-child(odd) {
+            background-color: #f9fafb;
+        }
+    </style>
+    <!-- Highlight.js para el resaltado de sintaxis SQL -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        <!-- ===== NAVEGACIÓN DE VUELTA ===== -->
+        <nav class="mb-6">
+            <a href="index.html" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200 text-lg">
+                &larr; Volver a la página principal de la guía
+            </a>
+        </nav>
+
+        <!-- ===== CABECERA DEL MÓDULO ===== -->
+        <header class="mb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-2">
+                Guía Rápida de Análisis Espacial en QGIS
+            </h1>
+            <p class="text-xl text-gray-600">
+                Fundamentos de datos vectoriales, ráster y automatización con PyQGIS.
+            </p>
+        </header>
+
+        <article class="bg-white p-6 sm:p-8 lg:p-12 rounded-xl shadow-md border border-gray-200 article-content">
+            
+            <h2>1. Datos Vectoriales: Representando el Mundo Real</h2>
+            <p>
+                Los <strong>datos vectoriales</strong> son una forma de representar entidades del mundo real (como carreteras, árboles o límites de barrios) dentro de un SIG. Su forma se representa usando una <strong>geometría</strong>, la cual está compuesta por uno o más <strong>vértices</strong> interconectados. Un vértice describe una posición en el espacio mediante coordenadas (X, Y).
+            </p>
+            
+            <h3>1.1. Tipos de Geometría Vectorial</h3>
+            <ul>
+                <li><strong>Punto:</strong> Un único vértice. Se usa para representar objetos sin una dimensión medible a cierta escala, como postes, árboles o puntos de interés.</li>
+                <img src="imagenes/Guia rapida de analisis espacial en QGIS/imagen1.png" alt="[Diagrama de la geometria tipo punto]" class="w-full max-w-4xl mx-auto my-4 rounded-lg shadow-md border">
+                <li><strong>Polilínea (o Línea):</strong> Una secuencia de dos o más vértices conectados que no forman un área cerrada. Se usa para representar entidades lineales como calles, ríos o redes de servicios.</li>
+                <img src="imagenes/Guia rapida de analisis espacial en QGIS/imagen2.png" alt="[Diagrama de la geometria tipo Polilínea]" class="w-full max-w-4xl mx-auto my-4 rounded-lg shadow-md border">
+                <li><strong>Polígono:</strong> Una secuencia de tres o más vértices donde el primero y el último coinciden, formando un área cerrada. Se usa para representar entidades como barrios, lotes, lagos o países.</li>
+                <img src="imagenes/Guia rapida de analisis espacial en QGIS/imagen3.png" alt="[Diagrama de la geometria tipo polígono" class="w-full max-w-4xl mx-auto my-4 rounded-lg shadow-md border">
+            </ul>
+            
+
+            <h2>2. Datos Ráster: Representando Superficies Continuas</h2>
+            <p>
+                A diferencia de los datos vectoriales, los <strong>datos ráster</strong> representan el espacio como una matriz o cuadrícula de píxeles (celdas). Cada píxel tiene un valor que representa una característica de esa área específica, como la elevación, la temperatura o el color en una fotografía aérea.
+            </p>
+            <p>
+                Los datos ráster son ideales para representar fenómenos que son continuos en el espacio, como imágenes de satélite, modelos digitales de elevación (DEM) o mapas de calor.
+            </p>
+            <img src="imagenes/Guia rapida de analisis espacial en QGIS/imagen4.png" alt="[Diagrama que compara la representación de un paisaje con datos vectoriales y datos ráster]" class="w-full max-w-lg mx-auto my-4 rounded-lg shadow-md border">
+
+            <h2>3. Análisis Espacial en QGIS con PyQGIS</h2>
+            <p>
+                QGIS permite realizar análisis espaciales complejos. Si bien muchas herramientas están disponibles en la interfaz gráfica, el verdadero poder se desata al usar <strong>PyQGIS</strong> (la API de Python para QGIS) para automatizar tareas y realizar análisis personalizados.
+            </p>
+
+            <h3>3.1. Cargar una Capa Vectorial</h3>
+            <p>Podemos cargar una capa (por ejemplo, un Shapefile) en nuestro proyecto usando un simple script en la Consola de Python.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-python"># Reemplaza con la ruta a tu archivo .shp
+ruta_vias = r'C:\ruta\completa\a\EEngativa_vias.shp'
+
+# Carga la capa y la añade al proyecto
+layer_vias = iface.addVectorLayer(ruta_vias, "Vias de Engativá", "ogr")
+
+if not layer_vias:
+    print("Error: No se pudo cargar la capa 'Vias de Engativá'")
+else:
+    print("Capa 'Vias de Engativá' cargada correctamente.")</code></pre>
+            </div>
+
+            <h3>3.2. Consultar Atributos con Condiciones</h3>
+            <p>Podemos recorrer los registros de una capa y analizar sus atributos. Por ejemplo, si tenemos una capa de incidentes con un campo de variación, podemos identificar aquellos con un aumento significativo.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-python"># Suponiendo que 'layer_incidentes' ya está cargada
+for f in layer_incidentes.getFeatures():
+    nombre = f["CMNOMSCAT"]  # Nombre del incidente/categoría
+    variacion = f["CMRVAR"]   # Valor de variación
+
+    if variacion is not None and variacion > 20:
+        print(f"{nombre} tuvo un aumento significativo: {variacion}%")</code></pre>
+            </div>
+
+            <h3>3.3. Análisis de Intersección y Cobertura</h3>
+            <p>Un análisis espacial común es determinar qué entidades de una capa se encuentran dentro de otra y calcular métricas a partir de ello. El siguiente script calcula el área de vías que hay dentro de cada barrio y lo guarda como un nuevo atributo.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-python">from qgis.core import QgsSpatialIndex, QgsField
+from qgis.PyQt.QtCore import QVariant
+
+# Asegurar que las capas 'layer_barrios' y 'layer_vias' están cargadas
+# Crear un índice espacial para las vías para acelerar la búsqueda
+index_vias = QgsSpatialIndex(layer_vias.getFeatures())
+
+# Añadir nuevos campos a la capa de barrios si no existen
+provider = layer_barrios.dataProvider()
+if 'area_vias' not in [f.name() for f in provider.fields()]:
+    provider.addAttributes([
+        QgsField('area_vias', QVariant.Double),
+        QgsField('cob_vial', QVariant.Double)
+    ])
+    layer_barrios.updateFields()
+
+# Iniciar la edición de la capa de barrios
+with edit(layer_barrios):
+    for barrio in layer_barrios.getFeatures():
+        geom_barrio = barrio.geometry()
+        area_total_barrio = geom_barrio.area()
+        area_total_vias = 0.0
+
+        # Obtener IDs de las vías que posiblemente intersectan el barrio
+        posibles_ids = index_vias.intersects(geom_barrio.boundingBox())
+
+        # Calcular el área de intersección real
+        for id_via in posibles_ids:
+            via = layer_vias.getFeature(id_via)
+            if geom_barrio.intersects(via.geometry()):
+                interseccion = geom_barrio.intersection(via.geometry())
+                area_total_vias += interseccion.area()
+        
+        # Actualizar los atributos del barrio
+        barrio['area_vias'] = area_total_vias
+        if area_total_barrio > 0:
+            barrio['cob_vial'] = area_total_vias / area_total_barrio
+        else:
+            barrio['cob_vial'] = 0
+        
+        layer_barrios.updateFeature(barrio)
+
+print("Cálculo de cobertura vial completado.")</code></pre>
+            </div>
+
+            <h3>3.4. Análisis de Distancias y Vecinos Cercanos</h3>
+            <p>Este análisis tiene como objetivo calcular, para cada centroide de incidente, la distancia en metros hasta la estación de policía más cercana y guardar ese valor en un nuevo campo.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-python">from qgis.core import QgsDistanceArea, QgsFeatureRequest, QgsField
+from qgis.PyQt.QtCore import QVariant
+
+# Suponiendo que 'layer_centroides' y 'layer_estaciones' están cargadas
+dist_calc = QgsDistanceArea()
+dist_calc.setEllipsoid('WGS84') # Para cálculos precisos
+
+# Añadir campo para la distancia si no existe
+provider = layer_centroides.dataProvider()
+if 'dist_est' not in [f.name() for f in provider.fields()]:
+    provider.addAttributes([QgsField("dist_est", QVariant.Double)])
+    layer_centroides.updateFields()
+
+with edit(layer_centroides):
+    for incidente in layer_centroides.getFeatures():
+        pto_incidente = incidente.geometry().asPoint()
+        min_dist = float('inf')
+
+        # Iterar sobre todas las estaciones para encontrar la más cercana
+        for estacion in layer_estaciones.getFeatures():
+            pto_estacion = estacion.geometry().asPoint()
+            dist = dist_calc.measureLine(pto_incidente, pto_estacion)
+            
+            if dist < min_dist:
+                min_dist = dist
+        
+        # Actualizar el campo con la distancia mínima encontrada
+        incidente['dist_est'] = min_dist
+        layer_centroides.updateFeature(incidente)
+
+print("Cálculo de distancia a la estación más cercana completado.")</code></pre>
+            </div>
+            <p>Este tipo de análisis es clave para identificar la accesibilidad a servicios y detectar zonas con posible necesidad de mayor cobertura institucional.</p>
+
+            <h2>4. Ejercicio de Análisis Espacial con Ráster (Interpolación)</h2>
+            <p>
+                El objetivo de este ejercicio es identificar los sectores de la localidad de Engativá donde hubo mayor concentración de incidentes de hurto en 2019. Para ello, generaremos una superficie continua mediante la herramienta de <strong>Interpolación IDW (Distancia Inversa Ponderada)</strong>.
+            </p>
+            <ol class="list-decimal list-inside space-y-2">
+                <li>En la <strong>Caja de herramientas de Procesos</strong>, busca y selecciona la herramienta <strong>Interpolación IDW</strong>.</li>
+                <li>En la ventana de la herramienta, selecciona tu capa de puntos de incidentes como la "Capa vectorial".</li>
+                <li>Elige el campo numérico que deseas interpolar. Si solo te interesa la densidad, puedes usar un campo con un valor constante para todos los puntos.</li>
+                <li>Define la extensión y el tamaño del píxel para el ráster de salida. Puedes usar la extensión de la capa de barrios de Engativá para limitar el análisis a esa área.</li>
+                <li>Ejecuta la herramienta. El resultado será un ráster en escala de grises.</li>
+            </ol>
+             <img src="imagenes/Guia rapida de analisis espacial en QGIS/imagen5.png" alt="[Imagen de la interfaz de QGIS mostrando la herramienta de Interpolación IDW]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+            <p>
+                Para una mejor visualización, puedes cambiar la simbología del ráster resultante a "Pseudocolor monobanda", eligiendo una rampa de color (como 'Magma' o 'Viridis') que resalte las zonas de mayor valor (puntos calientes).
+            </p>
+            <img src="imagenes/Guia rapida de analisis espacial en QGIS/imagen6.png" alt="[Mapa de calor resultante de la interpolación, mostrando las zonas de mayor concentración de incidentes]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+            <p>Este mapa de calor permite identificar visualmente y de forma rápida las áreas con mayor concentración de hurtos, como el barrio "Los Ángeles" en este ejemplo, facilitando la toma de decisiones estratégicas.</p>
+
+        </article>
+        
+        <!-- ===== PIE DE PÁGINA ===== -->
+        <footer class="text-center mt-16 pt-8 border-t border-gray-300">
+            <p class="text-gray-600">&copy; 2024 Universidad Distrital Francisco José de Caldas. Todos los derechos reservados.</p>
+            <p class="text-sm text-gray-500 mt-1">Este material se distribuye bajo la licencia Creative Commons Atribución-CompartirIgual.</p>
+        </footer>
+    </div>
+    <script>
+        // Inicializa Highlight.js para resaltar todos los bloques de código
+        hljs.highlightAll();
+
+        // Agrega la funcionalidad de copiado a todos los botones
+        const copyButtons = document.querySelectorAll('.copy-button');
+        copyButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const pre = button.parentElement.querySelector('pre > code');
+                const textToCopy = pre.innerText;
+
+                // Usamos un textarea temporal para copiar el texto
+                const textArea = document.createElement('textarea');
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    button.innerText = 'Copiado!';
+                    button.classList.add('copied');
+                } catch (err) {
+                    console.error('Error al copiar el texto: ', err);
+                    button.innerText = 'Error';
+                }
+                document.body.removeChild(textArea);
+
+                // Revertir el texto del botón después de 2 segundos
+                setTimeout(() => {
+                    button.innerText = 'Copiar';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>

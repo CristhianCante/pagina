@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo: Funciones y Ejercicios de Construcción de Geometría - Guía de PostGIS Bogotá</title>
+    <!-- Tailwind CSS para un diseño rápido y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilos para el contenido del artículo */
+        .article-content h2 {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 800; /* extrabold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2.5rem; /* mt-10 */
+            margin-bottom: 1rem; /* mb-4 */
+            border-bottom: 2px solid #e5e7eb; /* border-gray-200 */
+            padding-bottom: 0.5rem; /* pb-2 */
+        }
+        .article-content h3 {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 700; /* bold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2rem; /* mt-8 */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .article-content p, .article-content ul, .article-content ol {
+            font-size: 1.125rem; /* text-lg */
+            color: #374151; /* gray-700 */
+            line-height: 1.75;
+            margin-bottom: 1rem;
+        }
+        .article-content ul {
+            list-style-type: disc;
+            padding-left: 2rem;
+        }
+        .article-content a {
+            color: #2563eb; /* blue-600 */
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .article-content a:hover {
+            color: #1d4ed8; /* blue-800 */
+            text-decoration: underline;
+        }
+        .article-content code:not(.hljs) { /* Código inline */
+            background-color: #e5e7eb;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .code-block-container {
+            position: relative;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .copy-button {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background-color: #4b5563;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 1px solid #6b7280;
+        }
+        .copy-button:hover {
+            background-color: #374151;
+        }
+        .copy-button.copied {
+            background-color: #16a34a; /* green-600 */
+        }
+    </style>
+    <!-- Highlight.js para el resaltado de sintaxis SQL -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        <!-- ===== NAVEGACIÓN DE VUELTA ===== -->
+        <nav class="mb-6">
+            <a href="index.html" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200 text-lg">
+                &larr; Volver a la página principal de la guía
+            </a>
+        </nav>
+
+        <!-- ===== CABECERA DEL MÓDULO ===== -->
+        <header class="mb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-2">
+                Funciones y Ejercicios de Construcción de Geometría
+            </h1>
+            <p class="text-xl text-gray-600">
+                Creando y manipulando geometrías directamente desde SQL para resolver problemas prácticos.
+            </p>
+        </header>
+
+        <article class="bg-white p-6 sm:p-8 lg:p-12 rounded-xl shadow-md border border-gray-200 article-content">
+            
+            <h2>1. Funciones de Construcción de Geometría</h2>
+            <p>
+                En esta sección aprenderás a construir geometrías directamente desde funciones SQL en PostGIS, sin necesidad de cargar archivos externos. Estas funciones son fundamentales cuando se requiere crear datos desde cero, hacer pruebas o complementar registros existentes con coordenadas nuevas. Trabajaremos con datos de la localidad de Teusaquillo.
+            </p>
+
+            <h3>1.1. Crear Puntos con `ST_MakePoint`</h3>
+            <p>
+                La función <code>ST_MakePoint(x, y)</code> permite construir un punto. Para que esté correctamente georreferenciado, se debe aplicar <code>ST_SetSRID(geom, srid)</code>.
+            </p>
+            <p><strong>Ejemplo:</strong> Insertar una nueva IPS en Teusaquillo.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">INSERT INTO ips_teusaquillo (ips_id, geometria, nombre_municipio, nombre_ips, nombre_barrio) VALUES 
+(1001, ST_SetSRID(ST_MakePoint(-74.066, 4.635), 4326), 'Bogotá D.C.', 'SEDE GALERÍAS SALUD VISUAL', 'La Soledad');</code></pre>
+            </div>
+
+            <h3>1.2. Crear Líneas con `ST_MakeLine`</h3>
+            <p>La función <code>ST_MakeLine</code> se utiliza para construir líneas conectando dos o más geometrías de tipo punto.</p>
+            <p><strong>Ejemplo:</strong> Crear una línea que conecte los centroides de dos barrios.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT ST_MakeLine(b1.geometria, b2.geometria) AS linea_conexion
+FROM barrios_teusaquillo b1, barrios_teusaquillo b2
+WHERE b1.nombre_barrio = 'La Soledad' AND b2.nombre_barrio = 'Quinta Paredes';</code></pre>
+            </div>
+
+            <h3>1.3. Crear Polígonos con `ST_MakePolygon`</h3>
+            <p>Para construir un polígono se debe partir de una línea cerrada (un `LINESTRING` donde el primer y último punto son iguales).</p>
+            <p><strong>Ejemplo:</strong> Crear un polígono para representar una manzana.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT ST_SetSRID(
+    ST_MakePolygon(
+        ST_GeomFromText('LINESTRING(-74.068 4.633, -74.067 4.633, -74.067 4.634, -74.068 4.634, -74.068 4.633)')
+    ), 4326
+) AS poligono_manzana;</code></pre>
+            </div>
+            
+            <h3>1.4. Otras Funciones Útiles</h3>
+            <ul>
+                <li><strong><code>ST_Buffer(geometry, distance)</code>:</strong> Genera una zona de influencia (un polígono) alrededor de una geometría.</li>
+                <li><strong><code>ST_Centroid(geometry)</code>:</strong> Calcula el centro geométrico de una geometría.</li>
+                <li><strong><code>ST_Union(geometry)</code>:</strong> Combina múltiples geometrías en una sola, disolviendo los límites internos.</li>
+                <li><strong><code>ST_Intersection(geomA, geomB)</code>:</strong> Devuelve la geometría que resulta de la intersección de dos geometrías.</li>
+            </ul>
+
+            <h2>2. Ejercicios Prácticos de Construcción</h2>
+            <p>Apliquemos las funciones aprendidas para resolver problemas reales con los datos de Teusaquillo.</p>
+
+            <h3>Ejercicio 1: Identificación de zonas sin cobertura de salud (IPS)</h3>
+            <p><strong>Problema:</strong> La Alcaldía quiere saber qué barrios no tienen una IPS a menos de 300 metros para priorizar inversión.</p>
+            <p><strong>Solución:</strong> Creamos un buffer de 300 metros alrededor de cada IPS y luego seleccionamos los barrios que no se intersectan con ninguna de estas áreas de cobertura.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">WITH zonas_cobertura AS (
+    SELECT ST_Union(ST_Buffer(geometria::geography, 300)::geometry) AS geom_total
+    FROM ips_teusaquillo
+)
+SELECT b.nombre_barrio
+FROM barrios_teusaquillo b, zonas_cobertura z
+WHERE NOT ST_Intersects(b.geometria, z.geom_total);</code></pre>
+            </div>
+<p>
+                Esta consulta arroja el siguiente resultado
+            </p>
+            <img src="imagenes/funciones de construcción de geometrias/imagen1.png" alt="[Resultado de la consulta]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+            <h3>Ejercicio 2: Propuesta de nueva ciclorruta</h3>
+            <p><strong>Problema:</strong> Se desea proponer una ciclorruta aprovechando vías de tipo "residencial" de baja velocidad.</p>
+            <p><strong>Solución:</strong> Calculamos la longitud total de todas las vías residenciales disponibles para estimar el potencial de la red de ciclorrutas.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT SUM(ST_Length(geometria::geography)) AS total_metros_potenciales
+FROM mallavial_teusaquillo
+WHERE tipo_via ILIKE '%residencial%';</code></pre>
+            </div>
+
+            <h3>Ejercicio 3: Simulación de puntos de recolección de residuos</h3>
+            <p><strong>Problema:</strong> Se necesita registrar la ubicación de 3 nuevos puntos de reciclaje en coordenadas conocidas.</p>
+            <p><strong>Solución:</strong> Creamos una nueva tabla e insertamos los puntos manualmente usando <code>ST_MakePoint</code>.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">CREATE TABLE puntos_reciclaje (
+    id SERIAL PRIMARY KEY,
+    ubicacion geometry(Point, 4326),
+    descripcion TEXT
+);
+
+INSERT INTO puntos_reciclaje (ubicacion, descripcion) VALUES
+(ST_SetSRID(ST_MakePoint(-74.0665, 4.6341), 4326), 'Parque Principal'),
+(ST_SetSRID(ST_MakePoint(-74.0670, 4.6352), 4326), 'Frente a clínica'),
+(ST_SetSRID(ST_MakePoint(-74.0658, 4.6330), 4326), 'Zona Universitaria');</code></pre>
+            </div>
+
+            <h3>Ejercicio 4: Comparación de áreas por barrio</h3>
+            <p><strong>Problema:</strong> Se requiere identificar los 5 barrios más grandes de Teusaquillo para planificación urbana.</p>
+            <p><strong>Solución:</strong> Usamos <code>ST_Area</code> sobre el tipo <code>geography</code> para obtener el área en metros cuadrados y ordenamos los resultados.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT 
+    nombre_barrio,
+    ST_Area(geometria::geography) AS area_m2
+FROM barrios_teusaquillo
+ORDER BY area_m2 DESC
+LIMIT 5;</code></pre>
+            </div>
+<p>
+                Esta consulta arroja el siguiente resultado
+            </p>
+            <img src="imagenes/funciones de construcción de geometrias/imagen2.png" alt="[Resultado de la consulta]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+        </article>
+        
+        <!-- ===== PIE DE PÁGINA ===== -->
+        <footer class="text-center mt-16 pt-8 border-t border-gray-300">
+            <p class="text-gray-600">&copy; 2024 Universidad Distrital Francisco José de Caldas. Todos los derechos reservados.</p>
+            <p class="text-sm text-gray-500 mt-1">Este material se distribuye bajo la licencia Creative Commons Atribución-CompartirIgual.</p>
+        </footer>
+    </div>
+    <script>
+        // Inicializa Highlight.js para resaltar todos los bloques de código
+        hljs.highlightAll();
+
+        // Agrega la funcionalidad de copiado a todos los botones
+        const copyButtons = document.querySelectorAll('.copy-button');
+        copyButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const pre = button.parentElement.querySelector('pre > code');
+                const textToCopy = pre.innerText;
+
+                // Usamos un textarea temporal para copiar el texto
+                const textArea = document.createElement('textarea');
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    button.innerText = 'Copiado!';
+                    button.classList.add('copied');
+                } catch (err) {
+                    console.error('Error al copiar el texto: ', err);
+                    button.innerText = 'Error';
+                }
+                document.body.removeChild(textArea);
+
+                // Revertir el texto del botón después de 2 segundos
+                setTimeout(() => {
+                    button.innerText = 'Copiar';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>

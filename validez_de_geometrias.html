@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo: Validez de Geometrías - Guía de PostGIS Bogotá</title>
+    <!-- Tailwind CSS para un diseño rápido y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilos para el contenido del artículo */
+        .article-content h2 {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 800; /* extrabold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2.5rem; /* mt-10 */
+            margin-bottom: 1rem; /* mb-4 */
+            border-bottom: 2px solid #e5e7eb; /* border-gray-200 */
+            padding-bottom: 0.5rem; /* pb-2 */
+        }
+        .article-content h3 {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 700; /* bold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2rem; /* mt-8 */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .article-content p, .article-content ul, .article-content ol {
+            font-size: 1.125rem; /* text-lg */
+            color: #374151; /* gray-700 */
+            line-height: 1.75;
+            margin-bottom: 1rem;
+        }
+        .article-content ul {
+            list-style-type: disc;
+            padding-left: 2rem;
+        }
+        .article-content a {
+            color: #2563eb; /* blue-600 */
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .article-content a:hover {
+            color: #1d4ed8; /* blue-800 */
+            text-decoration: underline;
+        }
+        .article-content code:not(.hljs) { /* Código inline */
+            background-color: #e5e7eb;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .code-block-container {
+            position: relative;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .copy-button {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background-color: #4b5563;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 1px solid #6b7280;
+        }
+        .copy-button:hover {
+            background-color: #374151;
+        }
+        .copy-button.copied {
+            background-color: #16a34a; /* green-600 */
+        }
+    </style>
+    <!-- Highlight.js para el resaltado de sintaxis SQL -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        <!-- ===== NAVEGACIÓN DE VUELTA ===== -->
+        <nav class="mb-6">
+            <a href="index.html" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200 text-lg">
+                &larr; Volver a la página principal de la guía
+            </a>
+        </nav>
+
+        <!-- ===== CABECERA DEL MÓDULO ===== -->
+        <header class="mb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-2">
+                Validez de Geometrías
+            </h1>
+            <p class="text-xl text-gray-600">
+                Identificando y corrigiendo errores para asegurar la calidad de los datos espaciales.
+            </p>
+        </header>
+
+        <article class="bg-white p-6 sm:p-8 lg:p-12 rounded-xl shadow-md border border-gray-200 article-content">
+            
+            <h2>1. ¿Qué es la Validez Geométrica?</h2>
+            <p>
+                La <strong>validez geométrica</strong> se refiere al cumplimiento de un conjunto de reglas que garantizan que una geometría (punto, línea o polígono) tenga una estructura coherente y sin errores. En los Sistemas de Información Geográfica (SIG), la calidad de las geometrías es tan importante como la de los atributos. Geometrías inválidas pueden causar errores graves en cálculos espaciales, visualizaciones incorrectas y fallos en la interoperabilidad entre plataformas.
+            </p>
+            <p>
+                Una geometría válida evita problemas como autointersecciones, anillos mal definidos o huecos mal ubicados. PostGIS implementa estas reglas a través de funciones como <code>ST_IsValid</code> y <code>ST_MakeValid</code>.
+            </p>
+
+            <h3>1.1. Tipos de Consistencia</h3>
+            <p>La validez de los datos espaciales se puede evaluar desde tres perspectivas:</p>
+            <ul>
+                <li><strong>Consistencia Geométrica:</strong> Asegura que la forma y estructura de cada geometría individual sea válida. Por ejemplo, un polígono debe estar cerrado y no puede tener auto-intersecciones.</li>
+                <img src="imagenes/validez/imagen1.png" alt="[Imagen de consistencia geometrica]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+                <li><strong>Consistencia Topológica:</strong> Evalúa la relación espacial entre diferentes objetos (adyacencias, solapamientos, continuidad). Es esencial para que los datos reflejen correctamente la realidad geográfica.</li>
+                <img src="imagenes/validez/imagen2.png" alt="[Imagen de consistencia topologica]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+                <li><strong>Consistencia de Atributos:</strong> Se refiere a la coherencia entre la información espacial y los datos alfanuméricos asociados. Por ejemplo, que una geometría de polígono etiquetada como "parque" no tenga un atributo que la clasifique como "vía".</li>
+                <img src="imagenes/validez/imagen3.png" alt="[Imagen de consistencia de atributos]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+            </ul>
+            
+            <h3>1.2. Reglas y Errores Comunes de Validez en Polígonos</h3>
+            <p>Las geometrías de tipo polígono son las que presentan las reglas de validez más complejas. A continuación se detallan las más importantes:</p>
+            <ul>
+                <li>
+                    <strong>Los anillos deben estar cerrados:</strong> El primer y último punto de la secuencia de coordenadas que definen un anillo deben ser idénticos.
+                    <br><em>Error común:</em> El anillo queda "abierto" porque el último punto no coincide con el primero, impidiendo que represente un área cerrada.
+                </li>
+                <img src="imagenes/validez/imagen4.png" alt="[Imagen de anillos poligonales cerrados]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+                <li>
+                    <strong>Los anillos interiores (huecos) deben estar dentro del anillo exterior:</strong> Un hueco no puede tocar ni cruzar el límite del polígono principal.
+                    <br><em>Error común:</em> Un hueco se sale del polígono o toca su borde, lo cual es una violación topológica.
+                </li>
+                <img src="imagenes/validez/imagen5.png" alt="[Imagen de anillos interiores dentro del anaillo exterior]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+                <li>
+                    <strong>Los anillos no deben cruzarse a sí mismos:</strong> Un anillo no puede auto-intersectarse.
+                    <br><em>Error común:</em> Durante la digitalización se crean bucles o "figuras en ocho", generando una geometría inválida.
+                </li>
+                <img src="imagenes/validez/imagen6.png" alt="[Imagen de anillos cruzados]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+                <li>
+                    <strong>Los anillos no deben tocarse en más de un punto:</strong> Dos anillos distintos (por ejemplo, dos huecos, o un hueco y el borde exterior) solo pueden tocarse en un único vértice, pero no compartir un segmento de línea.
+                    <br><em>Error común:</em> Dos anillos comparten un borde, creando ambigüedad espacial.
+                </li>
+                <img src="imagenes/validez/imagen7.png" alt="[Imagen de anillos tocandose en mas de un punto]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+                <li>
+                    <strong>Los elementos de un multipolígono no deben solaparse:</strong> Cada polígono dentro de un multipolígono debe ser una entidad espacial distinta.
+                    <br><em>Error común:</em> Dos polígonos dentro del mismo registro de multipolígono se superponen, lo cual es inválido.
+                </li>
+                <img src="imagenes/validez/imagen8.png" alt="[Imagen de multipolígono]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+            </ul>
+
+            <h3>1.3. Consecuencias de Geometrías Inválidas</h3>
+            <ul>
+                <li>Cálculos de área o longitud erróneos o nulos.</li>
+                <li>Fallos en funciones espaciales como <code>ST_Intersection</code> o <code>ST_Union</code>, que lanzan errores de topología (<code>TopologyException</code>).</li>
+                <li>Comportamientos inesperados en la visualización de mapas.</li>
+                <li>Imposibilidad de insertar o actualizar registros en la base de datos.</li>
+            </ul>
+
+            <h2>2. Funciones Clave para la Validación en PostGIS</h2>
+            <p>PostGIS nos proporciona un conjunto de herramientas para diagnosticar y corregir geometrías.</p>
+            
+            <h3>2.1. ST_IsValid(geometry)</h3>
+            <p>Devuelve <code>true</code> si una geometría es válida y <code>false</code> si no lo es. Es la función principal para el diagnóstico.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">-- Contar cuántas geometrías inválidas hay en la tabla de barrios
+SELECT count(*) 
+FROM barrios_sancristobal 
+WHERE NOT ST_IsValid(geom);</code></pre>
+            </div>
+
+            <h3>2.2. ST_IsValidReason(geometry)</h3>
+            <p>Devuelve un mensaje de texto que describe por qué una geometría es inválida. Es extremadamente útil para entender la naturaleza del error.</p>
+             <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">-- Obtener la razón de la invalidez para las geometrías problemáticas
+SELECT id, barriocomu, ST_IsValidReason(geom)
+FROM barrios_sancristobal
+WHERE NOT ST_IsValid(geom);</code></pre>
+            </div>
+            <p>Resultado esperado para geometrias invalidas</p>
+<img src="imagenes/validez/imagen9.png" alt="[Resultado consulta]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+            <h3>2.3. ST_MakeValid(geometry)</h3>
+            <p>Intenta corregir una geometría inválida, devolviendo una versión válida de la misma. A veces, esto puede resultar en un cambio del tipo de geometría (por ejemplo, un polígono inválido puede convertirse en una colección de geometrías).</p>
+             <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">-- Corregir una geometría inválida específica
+UPDATE barrios_sancristobal
+SET geom = ST_MakeValid(geom)
+WHERE id = 301;</code></pre>
+            </div>
+
+            <h2>3. Caso Práctico: Validación en la Localidad de San Cristóbal</h2>
+            <p>Para ilustrar el proceso, trabajaremos con la capa de barrios de San Cristóbal. Primero, insertaremos intencionadamente algunas geometrías inválidas para poder diagnosticarlas y corregirlas.</p>
+
+            <h3>3.1. Inserción de Geometrías Inválidas (con fines académicos)</h3>
+            <p><strong>A. Auto-intersección:</strong> Un polígono que se cruza a sí mismo.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">INSERT INTO barrios_sancristobal (id, geom, barriocomu) VALUES 
+(300, ST_GeomFromText('POLYGON((-74.06 4.54, -74.02 4.54, -74.06 4.58, -74.02 4.58, -74.06 4.54))', 4326), 'interseccion');</code></pre>
+            </div>
+            <p><strong>B. Anillos duplicados:</strong> Un polígono definido con el mismo anillo dos veces.</p>
+             <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">INSERT INTO barrios_sancristobal (id, geom, barriocomu) VALUES 
+(301, ST_GeomFromText('POLYGON((-74.08 4.56, -74.04 4.56, -74.04 4.6, -74.08 4.6, -74.08 4.56), (-74.08 4.56, -74.04 4.56, -74.04 4.6, -74.08 4.6, -74.08 4.56))', 4326), 'Anillos Duplicados');</code></pre>
+            </div>
+
+            <h3>3.2. Diagnóstico y Corrección</h3>
+            <p>Primero, identificamos las geometrías inválidas y la razón del error.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT id, barriocomu, ST_IsValidReason(geom)
+FROM barrios_sancristobal
+WHERE NOT ST_IsValid(geom);</code></pre>
+            </div>
+            <p>El resultado nos mostrará los registros con ID 300 y 301, y el motivo del error, como "Self-intersection".</p>
+            <img src="imagenes/validez/imagen10.png" alt="[Resultado consulta]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+            <p>Luego, procedemos a corregir todas las geometrías inválidas en bloque, guardando una copia de la geometría original para auditoría.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">-- 1. Crear una columna para guardar la geometría original
+ALTER TABLE barrios_sancristobal ADD COLUMN geom_invalid geometry DEFAULT NULL;
+
+-- 2. Corregir las geometrías inválidas y respaldar la versión original
+UPDATE barrios_sancristobal
+SET 
+    geom_invalid = geom,
+    geom = ST_MakeValid(geom)
+WHERE NOT ST_IsValid(geom);</code></pre>
+            </div>
+
+            <h3>3.3. Verificación Post-Corrección</h3>
+            <p>Una vez corregidas, las operaciones espaciales como <code>ST_Area</code> o <code>ST_Union</code> funcionarán sin problemas.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">-- Calcular el área de los polígonos (ahora válidos)
+SELECT id, ST_Area(ST_Transform(geom, 9377)) AS area_m2
+FROM barrios_sancristobal
+WHERE id IN (300, 301);</code></pre>
+            </div>
+            <p>Esta consulta, que antes podría haber fallado o devuelto 0, ahora nos dará el área correcta en metros cuadrados.</p>
+            <img src="imagenes/validez/imagen11.png" alt="[Resultado consulta]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+
+            <h2>4. Recomendaciones y Buenas Prácticas</h2>
+            <ul>
+                <li><strong>Validar antes de insertar:</strong> Siempre que sea posible, verifica la validez de una geometría antes de guardarla en la base de datos.</li>
+                <li><strong>Mantener copias de seguridad:</strong> Antes de una corrección masiva, respalda las geometrías originales.</li>
+                <li><strong>Usar sistemas de referencia adecuados:</strong> Realiza cálculos métricos (área, distancia) en sistemas de referencia proyectados (como SRID 9377 para Bogotá), no en geográficos (SRID 4326).</li>
+                <li><strong>Documentar errores:</strong> Lleva un registro de los tipos de errores de validez que encuentras. Esto puede ayudar a mejorar los procesos de captura de datos.</li>
+            </ul>
+        </article>
+        
+        <!-- ===== PIE DE PÁGINA ===== -->
+        <footer class="text-center mt-16 pt-8 border-t border-gray-300">
+            <p class="text-gray-600">&copy; 2024 Universidad Distrital Francisco José de Caldas. Todos los derechos reservados.</p>
+            <p class="text-sm text-gray-500 mt-1">Este material se distribuye bajo la licencia Creative Commons Atribución-CompartirIgual.</p>
+        </footer>
+    </div>
+    <script>
+        // Inicializa Highlight.js para resaltar todos los bloques de código
+        hljs.highlightAll();
+
+        // Agrega la funcionalidad de copiado a todos los botones
+        const copyButtons = document.querySelectorAll('.copy-button');
+        copyButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const pre = button.parentElement.querySelector('pre > code');
+                const textToCopy = pre.innerText;
+
+                // Usamos un textarea temporal para copiar el texto
+                const textArea = document.createElement('textarea');
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    button.innerText = 'Copiado!';
+                    button.classList.add('copied');
+                } catch (err) {
+                    console.error('Error al copiar el texto: ', err);
+                    button.innerText = 'Error';
+                }
+                document.body.removeChild(textArea);
+
+                // Revertir el texto del botón después de 2 segundos
+                setTimeout(() => {
+                    button.innerText = 'Copiar';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo: Geometrías en 3D - Guía de PostGIS Bogotá</title>
+    <!-- Tailwind CSS para un diseño rápido y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilos para el contenido del artículo */
+        .article-content h2 {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 800; /* extrabold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2.5rem; /* mt-10 */
+            margin-bottom: 1rem; /* mb-4 */
+            border-bottom: 2px solid #e5e7eb; /* border-gray-200 */
+            padding-bottom: 0.5rem; /* pb-2 */
+        }
+        .article-content h3 {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 700; /* bold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2rem; /* mt-8 */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .article-content p, .article-content ul, .article-content ol {
+            font-size: 1.125rem; /* text-lg */
+            color: #374151; /* gray-700 */
+            line-height: 1.75;
+            margin-bottom: 1rem;
+        }
+        .article-content ul {
+            list-style-type: disc;
+            padding-left: 2rem;
+        }
+        .article-content a {
+            color: #2563eb; /* blue-600 */
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .article-content a:hover {
+            color: #1d4ed8; /* blue-800 */
+            text-decoration: underline;
+        }
+        .article-content code:not(.hljs) { /* Código inline */
+            background-color: #e5e7eb;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .code-block-container {
+            position: relative;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .copy-button {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background-color: #4b5563;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 1px solid #6b7280;
+        }
+        .copy-button:hover {
+            background-color: #374151;
+        }
+        .copy-button.copied {
+            background-color: #16a34a; /* green-600 */
+        }
+        .styled-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        .styled-table th, .styled-table td {
+            border: 1px solid #d1d5db;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        .styled-table th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+        }
+        .styled-table tbody tr:nth-child(odd) {
+            background-color: #f9fafb;
+        }
+    </style>
+    <!-- Highlight.js para el resaltado de sintaxis SQL -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        <!-- ===== NAVEGACIÓN DE VUELTA ===== -->
+        <nav class="mb-6">
+            <a href="index.html" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200 text-lg">
+                &larr; Volver a la página principal de la guía
+            </a>
+        </nav>
+
+        <!-- ===== CABECERA DEL MÓDULO ===== -->
+        <header class="mb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-2">
+                Geometrías en 3D
+            </h1>
+            <p class="text-xl text-gray-600">
+                Trabajando con altura (Z) y medidas (M) en PostGIS.
+            </p>
+        </header>
+
+        <article class="bg-white p-6 sm:p-8 lg:p-12 rounded-xl shadow-md border border-gray-200 article-content">
+            
+            <h2>1. ¿Qué son las Geometrías 3D y 4D?</h2>
+            <p>
+                Hasta ahora, hemos trabajado principalmente con geometrías en 2D, definidas por coordenadas (X, Y). PostGIS, sin embargo, tiene soporte completo para dimensiones adicionales que nos permiten crear modelos más ricos y complejos.
+            </p>
+            <ul>
+                <li><strong>Dimensión Z:</strong> Agrega el componente de <strong>altura</strong> o elevación a cada vértice de una geometría.</li>
+                <li><strong>Dimensión M:</strong> Es una dimensión de <strong>medida</strong> que puede tener múltiples usos, como registrar el tiempo, la distancia a lo largo de una ruta (ej. mojones kilométricos) o cualquier otro valor numérico asociado a un vértice.</li>
+            </ul>
+            <p>
+                Cuando añadimos una de estas dimensiones, obtenemos una geometría 3D. Si añadimos ambas, obtenemos una geometría 4D.
+            </p>
+            
+            <h3>1.1. Representación en WKT</h3>
+            <p>La representación en formato WKT (Well-Known Text) se adapta para incluir estas nuevas dimensiones, añadiendo una letra después del tipo de geometría y el valor correspondiente en cada coordenada.</p>
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>2D: POINT(X Y)</th>
+                        <th>3D: POINTZ(X Y Z)</th>
+                        <th>3D: POINTM(X Y M)</th>
+                        <th>4D: POINTZM(X Y Z M)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Punto</strong></td>
+                        <td><code>POINT(0 0)</code></td>
+                        <td><code>POINT Z(0 0 10)</code></td>
+                        <td><code>POINT M(0 0 50)</code></td>
+                        <td><code>POINT ZM(0 0 10 50)</code></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Línea</strong></td>
+                        <td><code>LINESTRING(0 0, 1 1)</code></td>
+                        <td><code>LINESTRING Z(0 0 10, 1 1 12)</code></td>
+                        <td><code>LINESTRING M(0 0 0, 1 1 100)</code></td>
+                        <td><code>LINESTRING ZM(0 0 10 0, 1 1 12 100)</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2>2. Convertir Geometrías de 2D a 3D/4D</h2>
+            <p>
+                Es muy común tener datos en 2D (como las huellas de los edificios) y querer añadirles una dimensión de altura. Usaremos una capa de edificios de la localidad de Suba para demostrarlo.
+            </p>
+
+            <h3>2.1. Añadir una columna 4D</h3>
+            <p>Primero, añadimos una nueva columna a nuestra tabla de edificios para almacenar la geometría 4D. Es una buena práctica conservar la columna 2D original como respaldo.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">ALTER TABLE edificios
+ADD COLUMN geom_4d geometry(MultiPolygonZM, 4326);</code></pre>
+            </div>
+
+            <h3>2.2. Forzar la dimensión y poblar la columna</h3>
+            <p>
+                Usamos la función <code>ST_Force4D()</code> para convertir las geometrías 2D existentes a 4D. Esta función añadirá los valores Z y M con un valor por defecto de 0.
+            </p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">UPDATE edificios
+SET geom_4d = ST_Force4D(geom);</code></pre>
+            </div>
+            
+            <h3>2.3. Añadir Altura con `ST_Translate`</h3>
+            <p>
+                La función <code>ST_Translate(geom, delta_x, delta_y, delta_z)</code> nos permite "mover" o desplazar una geometría. Si establecemos <code>delta_x</code> y <code>delta_y</code> en 0, podemos usarla para añadir una altura (un desplazamiento en Z) a nuestras geometrías.
+            </p>
+            <p><strong>Ejemplo:</strong> Asignar una altura de 10 metros a todos los edificios del barrio Mazurén (cuyo `fid` es 87).</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">UPDATE edificios
+SET geom_4d = ST_Translate(edificios.geom_4d, 0, 0, 10)
+WHERE EXISTS (
+    SELECT 1
+    FROM barrios_suba AS suba
+    WHERE suba.fid = 87 AND ST_Within(edificios.geom, suba.geom)
+);</code></pre>
+            </div>
+            
+            <h2>3. Funciones Espaciales en 3D</h2>
+            <p>PostGIS ofrece versiones 3D de muchas de sus funciones espaciales. Estas funciones tienen en cuenta la coordenada Z para sus cálculos.</p>
+            <p><strong>Nota importante:</strong> Para que los cálculos de distancia en 3D sean significativos, es crucial trabajar con un SRID proyectado (en metros). Sin embargo, para ilustrar la diferencia funcional, los siguientes ejemplos usan coordenadas geográficas.</p>
+
+            <h3>Comparativa de Funciones 2D vs. 3D</h3>
+            <p>Vamos a comparar los resultados de funciones 2D y 3D usando dos polígonos a diferentes alturas.</p>
+            <ul>
+                <li><strong><code>ST_3DDistance(geom1, geom2)</code>:</strong> Devuelve la distancia cartesiana tridimensional más corta entre dos geometrías.</li>
+                <li><strong><code>ST_3DIntersects(geom1, geom2)</code>:</strong> Devuelve <code>true</code> si las geometrías 3D se intersectan.</li>
+            </ul>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">WITH geoms AS (
+    SELECT 
+        'MULTIPOLYGON ZM (((-74.05 4.73 10 0, -74.05 4.74 10 0, -74.04 4.74 10 0, -74.04 4.73 10 0, -74.05 4.73 10 0)))'::geometry AS geom1,
+        'MULTIPOLYGON ZM (((-74.05 4.73 30 0, -74.05 4.74 30 0, -74.04 4.74 30 0, -74.04 4.73 30 0, -74.04 4.73 30 0)))'::geometry AS geom2
+)
+SELECT 
+    ST_Distance(geom1, geom2) AS distancia_2d,
+    ST_3DDistance(geom1, geom2) AS distancia_3d,
+    ST_Intersects(geom1, geom2) AS intersecta_2d,
+    ST_3DIntersects(geom1, geom2) AS intersecta_3d
+FROM geoms;</code></pre>
+            </div>
+            <p>En este ejemplo, la distancia 2D sería 0 (porque los polígonos se superponen en el plano XY), pero la distancia 3D sería 20 (la diferencia de altura). De manera similar, se intersectan en 2D, pero no en 3D, porque están en "planos" diferentes.</p>
+
+            <h2>4. Índices Espaciales N-Dimensionales</h2>
+            <p>Para acelerar las consultas 3D, podemos crear índices espaciales n-dimensionales. La sintaxis es similar a la de los índices 2D, pero especificando el operador <code>gist_geometry_ops_nd</code>.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">CREATE INDEX edificios_gix_nd ON edificios
+USING GIST (geom_4d gist_geometry_ops_nd);</code></pre>
+            </div>
+            <p>Para usar este índice en una consulta, se utiliza el operador <code>&&&</code> en lugar del <code>&&</code> de 2D. Este operador comprueba si las bounding boxes 3D se solapan.</p>
+            
+            <h3>¿Cuándo usar Índices N-Dimensionales?</h3>
+            <p>No siempre es una buena idea crear un índice n-dimensional. La eficiencia del índice depende de la naturaleza de los datos.</p>
+            <ul>
+                <li><strong>Buen candidato:</strong> Un conjunto de datos de trazas GPS. Las trazas son líneas 3D que se mueven por el espacio, y un índice 3D puede diferenciar eficientemente las que están a diferentes alturas, incluso si se cruzan en un mapa 2D.</li>
+                <img src="imagenes/geometrias en 3D/imagen1.png" alt="[Imagen de un buen candidato para indices n dimensionales]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+                <li><strong>Mal candidato:</strong> Una nube de puntos de un Modelo Digital de Elevación (DEM). En un DEM, muchos puntos están muy cerca unos de otros, lo que haría que las cajas delimitadoras del índice se solaparan masivamente, perdiendo eficiencia. En este caso, un índice 2D suele ser suficiente y más rápido.</li>
+                <img src="imagenes/geometrias en 3D/imagen2.png" alt="[Imagen de un mal candidato para indices n dimensionales]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+            </ul>
+
+            <h2>5. Introducción al Modelo CityGML</h2>
+            <p>
+                <strong>CityGML</strong> es un estándar abierto del OGC (Open Geospatial Consortium) para el almacenamiento e intercambio de modelos virtuales de ciudades en 3D. Es un modelo de datos semántico que no solo almacena la geometría, sino también el significado y las relaciones entre los objetos urbanos.
+            </p>
+            <p>
+                Es fundamental para aplicaciones como la planificación urbana, simulaciones, gestión de infraestructuras, catastro 3D y el desarrollo de "gemelos digitales" de ciudades.
+            </p>
+            <h3>Niveles de Detalle (LOD)</h3>
+            <p>CityGML clasifica los objetos urbanos en diferentes Niveles de Detalle (LOD), desde el más simple al más complejo:</p>
+            <ul>
+                <li><strong>LOD0:</strong> Representación 2.5D, como la huella de un edificio y su altura.</li>
+                <li><strong>LOD1:</strong> Modelo de bloques prismáticos simples.</li>
+                <li><strong>LOD2:</strong> Modelo arquitectónico con estructuras de techo y texturas simples.</li>
+                <li><strong>LOD3:</strong> Modelo arquitectónico detallado que incluye elementos como puertas y ventanas.</li>
+                <li><strong>LOD4:</strong> Modelo completo que incluye también las características interiores de los edificios (un modelo BIM).</li>
+            </ul>
+             <img src="imagenes/geometrias en 3D/imagen3.png" alt="[Diagrama de los diferentes Niveles de Detalle (LOD) en CityGML, desde un polígono 2D (LOD0) hasta un edificio con interiores (LOD4)]" class="w-full max-w-2xl mx-auto my-4 rounded-lg shadow-md border">
+
+        </article>
+        
+        <!-- ===== PIE DE PÁGINA ===== -->
+        <footer class="text-center mt-16 pt-8 border-t border-gray-300">
+            <p class="text-gray-600">&copy; 2024 Universidad Distrital Francisco José de Caldas. Todos los derechos reservados.</p>
+            <p class="text-sm text-gray-500 mt-1">Este material se distribuye bajo la licencia Creative Commons Atribución-CompartirIgual.</p>
+        </footer>
+    </div>
+    <script>
+        // Inicializa Highlight.js para resaltar todos los bloques de código
+        hljs.highlightAll();
+
+        // Agrega la funcionalidad de copiado a todos los botones
+        const copyButtons = document.querySelectorAll('.copy-button');
+        copyButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const pre = button.parentElement.querySelector('pre > code');
+                const textToCopy = pre.innerText;
+
+                // Usamos un textarea temporal para copiar el texto
+                const textArea = document.createElement('textarea');
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    button.innerText = 'Copiado!';
+                    button.classList.add('copied');
+                } catch (err) {
+                    console.error('Error al copiar el texto: ', err);
+                    button.innerText = 'Error';
+                }
+                document.body.removeChild(textArea);
+
+                // Revertir el texto del botón después de 2 segundos
+                setTimeout(() => {
+                    button.innerText = 'Copiar';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo: Búsqueda de Vecinos Cercanos - Guía de PostGIS Bogotá</title>
+    <!-- Tailwind CSS para un diseño rápido y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilos para el contenido del artículo */
+        .article-content h2 {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 800; /* extrabold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2.5rem; /* mt-10 */
+            margin-bottom: 1rem; /* mb-4 */
+            border-bottom: 2px solid #e5e7eb; /* border-gray-200 */
+            padding-bottom: 0.5rem; /* pb-2 */
+        }
+        .article-content h3 {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 700; /* bold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2rem; /* mt-8 */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .article-content p, .article-content ul, .article-content ol {
+            font-size: 1.125rem; /* text-lg */
+            color: #374151; /* gray-700 */
+            line-height: 1.75;
+            margin-bottom: 1rem;
+        }
+        .article-content ul {
+            list-style-type: disc;
+            padding-left: 2rem;
+        }
+        .article-content a {
+            color: #2563eb; /* blue-600 */
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .article-content a:hover {
+            color: #1d4ed8; /* blue-800 */
+            text-decoration: underline;
+        }
+        .article-content code:not(.hljs) { /* Código inline */
+            background-color: #e5e7eb;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .code-block-container {
+            position: relative;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .copy-button {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background-color: #4b5563;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 1px solid #6b7280;
+        }
+        .copy-button:hover {
+            background-color: #374151;
+        }
+        .copy-button.copied {
+            background-color: #16a34a; /* green-600 */
+        }
+    </style>
+    <!-- Highlight.js para el resaltado de sintaxis SQL -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        <!-- ===== NAVEGACIÓN DE VUELTA ===== -->
+        <nav class="mb-6">
+            <a href="index.html" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200 text-lg">
+                &larr; Volver a la página principal de la guía
+            </a>
+        </nav>
+
+        <!-- ===== CABECERA DEL MÓDULO ===== -->
+        <header class="mb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-2">
+                Búsqueda de Vecinos Cercanos (Nearest Neighbor Search)
+            </h1>
+            <p class="text-xl text-gray-600">
+                Encontrando los objetos más próximos a una geometría de referencia en PostGIS.
+            </p>
+        </header>
+
+        <article class="bg-white p-6 sm:p-8 lg:p-12 rounded-xl shadow-md border border-gray-200 article-content">
+            
+            <h2>1. ¿Qué es la Búsqueda de Vecinos Cercanos?</h2>
+            <p>
+                La búsqueda de vecinos cercanos es el proceso de encontrar uno o más registros en un conjunto de datos que están más próximos a un objeto de consulta. Responde a la pregunta espacial: <strong>"¿Cuál es la característica más cercana a mi punto de interés?"</strong>.
+            </p>
+            <p>
+                A diferencia de una búsqueda por distancia (como con <code>ST_DWithin</code>), donde se establece un radio fijo, la búsqueda de vecinos cercanos no tiene una restricción de distancia. Simplemente busca los "k" elementos más próximos, sin importar cuán lejos o cerca estén.
+            </p>
+            <p>Existen diferentes criterios para definir la "vecindad":</p>
+            <ul>
+                <li><strong>Contigüidad:</strong> Se basa en si las geometrías se tocan (como en un tablero de ajedrez, con movimientos de Reina, Torre o Alfil).</li>
+                <li><strong>K-Vecinos más Cercanos (KNN):</strong> Se especifica un número "k" de vecinos a encontrar, independientemente de la distancia. Este es el enfoque que exploraremos en PostGIS.</li>
+                <li><strong>Funciones Kernel:</strong> Asignan pesos a los vecinos de modo que la influencia de un punto disminuye a medida que aumenta su distancia.</li>
+            </ul>
+
+            <h2>2. Metodología en SQL</h2>
+            <p>El proceso para encontrar los k-vecinos más cercanos en PostGIS sigue una estructura lógica:</p>
+            <ol class="list-decimal list-inside space-y-2">
+                <li><strong>Calcular la distancia:</strong> Se utiliza el operador de distancia <code><-></code> para calcular la distancia entre la geometría de referencia y todas las geometrías de la tabla objetivo.</li>
+                <li><strong>Ordenar por distancia:</strong> Se usa <code>ORDER BY</code> sobre la distancia calculada en orden ascendente (<code>ASC</code>) para poner los objetos más cercanos primero.</li>
+                <li><strong>Limitar los resultados:</strong> Se usa <code>LIMIT k</code> para obtener solo los "k" primeros resultados, que serán los más cercanos.</li>
+            </ol>
+            <p>El operador de distancia <code><-></code> es especialmente eficiente porque está diseñado para trabajar directamente con índices espaciales, haciendo que estas búsquedas sean muy rápidas.</p>
+
+            <h2>3. Ejemplos con la Localidad de Tunjuelito</h2>
+            <p>Para ilustrar el proceso, utilizaremos datos de la localidad de Tunjuelito, incluyendo barrios, incidentes de bomberos y la ubicación de las estaciones de bomberos.</p>
+            
+            <h3>3.1. Encontrar las Estaciones de Bomberos más Cercanas a un Incidente</h3>
+            <p><strong>Problema:</strong> Ocurrió un incidente en el Parque El Tunal y necesitamos saber cuáles son las dos estaciones de bomberos más cercanas para despachar unidades.</p>
+            <p>Primero, obtenemos las coordenadas del incidente de interés (supongamos que es el incidente con número '67213').</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">-- Obtener las coordenadas de un incidente específico
+SELECT ST_AsEWKT(geom) AS coordenadas
+FROM "Incidentes" 
+WHERE "NUMERO_INC" = '67213';</code></pre>
+            </div>
+            <p>El resultado nos da un punto, por ejemplo: <code>SRID=4326;POINT(-74.134035 4.573162)</code>.</p>
+            <p>Ahora, usamos este punto para encontrar las 2 estaciones más cercanas. Usamos el operador <code><-></code> para la distancia y el casting <code>::geography</code> para obtener el resultado en metros.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT 
+    b."EBONOMBRE" AS nombre_estacion,
+    b.geom <-> 'SRID=4326;POINT(-74.134035 4.573162)'::geography AS distancia_metros
+FROM "est_Bomb" b
+ORDER BY distancia_metros ASC
+LIMIT 2;</code></pre>
+            </div>
+            <p>Esta consulta nos devolverá las dos estaciones más próximas, ordenadas por distancia, permitiendo una toma de decisiones rápida y eficiente.</p>
+<img src="imagenes/vecinos cercanos/imagen1.png" alt="[Resultado de la consulta]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+            <h3>3.2. Encontrar la Estación más Cercana para CADA Incidente</h3>
+            <p><strong>Problema:</strong> Queremos realizar un análisis más profundo y determinar, para cada incidente reportado, cuál es la estación de bomberos más cercana y a qué distancia se encuentra. Hacer esto con un simple JOIN sería muy ineficiente.</p>
+            <p><strong>Solución:</strong> Usamos un <code>CROSS JOIN LATERAL</code>. Esta construcción de SQL nos permite ejecutar una subconsulta (la búsqueda del vecino más cercano) para cada fila de la tabla principal (la tabla de incidentes).</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT
+    i.id AS incidente_id,
+    i."ESTACION" AS estacion_que_atendio,
+    eb_cercana."EBONOMBRE" AS estacion_mas_cercana,
+    ST_Distance(i.geom::geography, eb_cercana.geom::geography) AS distancia_en_metros
+FROM
+    "Incidentes" i
+CROSS JOIN LATERAL (
+    SELECT
+        eb.id,
+        eb."EBONOMBRE",
+        eb.geom
+    FROM "est_Bomb" eb
+    ORDER BY
+        eb.geom <-> i.geom -- Calcula la distancia para CADA incidente 'i'
+    LIMIT 1 -- Obtiene solo el más cercano
+) AS eb_cercana;</code></pre>
+            </div>
+            <p>
+                Esta potente consulta nos devuelve una tabla donde cada fila corresponde a un incidente y nos muestra tanto la estación que oficialmente atendió el caso como la que geométricamente era la más cercana. Este tipo de análisis es fundamental para la optimización de recursos, ya que permite identificar discrepancias y evaluar la eficiencia de la red de respuesta a emergencias.
+            </p>
+            <img src="imagenes/vecinos cercanos/imagen2.png" alt="[Mapa de la localidad de Tunjuelito mostrando la ubicación de incidentes y estaciones de bomberos]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+
+        </article>
+        
+        <!-- ===== PIE DE PÁGINA ===== -->
+        <footer class="text-center mt-16 pt-8 border-t border-gray-300">
+            <p class="text-gray-600">&copy; 2024 Universidad Distrital Francisco José de Caldas. Todos los derechos reservados.</p>
+            <p class="text-sm text-gray-500 mt-1">Este material se distribuye bajo la licencia Creative Commons Atribución-CompartirIgual.</p>
+        </footer>
+    </div>
+    <script>
+        // Inicializa Highlight.js para resaltar todos los bloques de código
+        hljs.highlightAll();
+
+        // Agrega la funcionalidad de copiado a todos los botones
+        const copyButtons = document.querySelectorAll('.copy-button');
+        copyButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const pre = button.parentElement.querySelector('pre > code');
+                const textToCopy = pre.innerText;
+
+                // Usamos un textarea temporal para copiar el texto
+                const textArea = document.createElement('textarea');
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    button.innerText = 'Copiado!';
+                    button.classList.add('copied');
+                } catch (err) {
+                    console.error('Error al copiar el texto: ', err);
+                    button.innerText = 'Error';
+                }
+                document.body.removeChild(textArea);
+
+                // Revertir el texto del botón después de 2 segundos
+                setTimeout(() => {
+                    button.innerText = 'Copiar';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>

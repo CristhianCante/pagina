@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo: Representación Topológica y Geométrica - Guía de PostGIS Bogotá</title>
+    <!-- Tailwind CSS para un diseño rápido y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilos para el contenido del artículo */
+        .article-content h2 {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 800; /* extrabold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2.5rem; /* mt-10 */
+            margin-bottom: 1rem; /* mb-4 */
+            border-bottom: 2px solid #e5e7eb; /* border-gray-200 */
+            padding-bottom: 0.5rem; /* pb-2 */
+        }
+        .article-content h3 {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 700; /* bold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2rem; /* mt-8 */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .article-content p, .article-content ul, .article-content ol {
+            font-size: 1.125rem; /* text-lg */
+            color: #374151; /* gray-700 */
+            line-height: 1.75;
+            margin-bottom: 1rem;
+        }
+        .article-content ul {
+            list-style-type: disc;
+            padding-left: 2rem;
+        }
+        .article-content a {
+            color: #2563eb; /* blue-600 */
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .article-content a:hover {
+            color: #1d4ed8; /* blue-800 */
+            text-decoration: underline;
+        }
+        .article-content code:not(.hljs) { /* Código inline */
+            background-color: #e5e7eb;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .code-block-container {
+            position: relative;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .copy-button {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background-color: #4b5563;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 1px solid #6b7280;
+        }
+        .copy-button:hover {
+            background-color: #374151;
+        }
+        .copy-button.copied {
+            background-color: #16a34a; /* green-600 */
+        }
+    </style>
+    <!-- Highlight.js para el resaltado de sintaxis SQL -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        <!-- ===== NAVEGACIÓN DE VUELTA ===== -->
+        <nav class="mb-6">
+            <a href="index.html" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200 text-lg">
+                &larr; Volver a la página principal de la guía
+            </a>
+        </nav>
+
+        <!-- ===== CABECERA DEL MÓDULO ===== -->
+        <header class="mb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-2">
+                Representación Topológica y Geométrica
+            </h1>
+            <p class="text-xl text-gray-600">
+                Comprendiendo la estructura interna de las TopoGeometrías, Capas y Relaciones.
+            </p>
+        </header>
+
+        <article class="bg-white p-6 sm:p-8 lg:p-12 rounded-xl shadow-md border border-gray-200 article-content">
+            
+            <h2>1. De Geometría a TopoGeometría</h2>
+            <p>
+                Cuando trabajamos con un modelo topológico, no almacenamos geometrías simples (<code>geometry</code>), sino <strong>TopoGeometrías</strong> (<code>topogeometry</code>). Una TopoGeometría no es una forma autocontenida, sino una <strong>referencia a un conjunto de primitivas topológicas (nodos, aristas, caras)</strong> que, juntas, componen la forma deseada.
+            </p>
+            <p>
+                Esta estructura es la que permite que dos polígonos adyacentes compartan la misma arista, garantizando que no haya huecos ni superposiciones entre ellos.
+            </p>
+            <img src="imagenes/representación topologica y geometrica/imagen2.png" alt="[Diagrama mostrando la relación entre Capas, TopoGeometrías y las primitivas topológicas]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+
+            <h3>1.1. Capas, TopoGeometrías y TopoElementos</h3>
+            <p>La organización interna de una topología en PostGIS se basa en tres conceptos:</p>
+            <ul>
+                <li><strong>Primitivas:</strong> Son los elementos básicos e indivisibles: Nodos, Aristas y Caras.</li>
+                <li><strong>TopoElemento:</strong> Es una referencia que puede apuntar a una primitiva (ej. la arista con ID 5) o a otra TopoGeometría de una capa inferior.</li>
+                <li><strong>TopoGeometría:</strong> Es un conjunto de uno o más TopoElementos.</li>
+                <li><strong>Capa (Layer):</strong> Es un contenedor que agrupa TopoGeometrías de un mismo tipo (puntos, líneas o polígonos). Cada columna de tipo `topogeometry` en una tabla está asociada a una capa dentro de la topología.</li>
+            </ul>
+
+            <h2>2. Capas Jerárquicas: Padres e Hijos</h2>
+            <p>
+                Las capas dentro de una topología pueden tener una relación jerárquica. Una capa "Padre" se puede construir a partir de los elementos de una capa "Hijo".
+            </p>
+            <img src="imagenes/representación topologica y geometrica/imagen1.png" alt="[Diagrama de la jerarquía de capas, mostrando cómo la Capa 2 se construye a partir de la Capa 1, y la Capa 1 a partir de las primitivas]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+            <ul>
+                <li>Una capa de <strong>Nivel 0</strong> es aquella cuyos TopoElementos hacen referencia directamente a las primitivas (Nodos, Aristas, Caras).</li>
+                <li>Una capa de <strong>Nivel 1</strong> sería una capa "Padre" cuyos TopoElementos hacen referencia a TopoGeometrías de una capa de Nivel 0 (su "Hijo").</li>
+            </ul>
+            <p>
+                Esta estructura permite construir geometrías complejas a partir de otras más simples. Por ejemplo, una capa de "Localidades" (Padre) podría construirse agrupando TopoGeometrías de una capa de "Barrios" (Hijo).
+            </p>
+
+            <h2>3. La Tabla de Relaciones</h2>
+            <p>
+                El "pegamento" que une todo este modelo es la <strong>tabla de relaciones</strong>. Cada topología tiene su propia tabla de relaciones (ej. <code>topo_barrios.relation</code>), que actúa como un puente entre las TopoGeometrías y los TopoElementos que las componen.
+            </p>
+            <p>
+                Cada fila en esta tabla vincula una TopoGeometría (a través de su <code>topogeo_id</code> y <code>layer_id</code>) con uno de sus componentes (a través de <code>element_id</code> y <code>element_type</code>). Una TopoGeometría compleja, como un polígono con varios huecos, tendrá múltiples entradas en esta tabla, una por cada arista o cara que la conforma.
+            </p>
+            <img src="imagenes/representación topologica y geometrica/imagen3.png" alt="[Diagrama mostrando cómo se busca en la tabla de relaciones para encontrar los componentes de una TopoGeometría]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+            
+            <h2>4. Ejemplo Práctico con la Localidad de Fontibón</h2>
+            <p>Continuando con el ejemplo del módulo anterior, donde creamos la topología `topo_barrios` a partir de la capa de barrios de Fontibón.</p>
+
+            <h3>4.1. Crear una segunda capa jerárquica</h3>
+            <p>Vamos a crear una nueva capa para la geometría de la Localidad de Fontibón dentro de la misma topología.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">-- Añadir una columna topogeométrica a la tabla de la localidad
+SELECT topology.AddTopoGeometryColumn(
+    'topo_barrios',
+    'public',
+    'Localidad_Fontibon',
+    'topogeom',
+    'POLYGON'
+);</code></pre>
+            </div>
+
+            <h3>4.2. Poblar la nueva capa</h3>
+            <p>Ahora, poblamos la nueva columna, convirtiendo la geometría de la localidad a su representación topológica.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">-- Poblar la topogeometría de la localidad
+UPDATE "Localidad_Fontibon"
+SET topogeom = topology.toTopoGeom(geom, 'topo_barrios', 2); -- El '2' es el nuevo layer_id</code></pre>
+            </div>
+            
+            <h3>4.3. Consultar los componentes de una TopoGeometría</h3>
+            <p>Ahora podemos consultar la tabla <code>relation</code> para ver de qué elementos primitivos se compone un barrio específico. Por ejemplo, para el barrio con `id = 10`:</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">-- Ver los elementos (caras, bordes, nodos) que componen el barrio con ID = 10
+SELECT
+    r.element_type,
+    r.element_id,
+    CASE
+        WHEN r.element_type = 1 THEN 'Nodo'
+        WHEN r.element_type = 2 THEN 'Arista'
+        WHEN r.element_type = 3 THEN 'Cara'
+    END AS tipo_elemento
+FROM topo_barrios.relation r
+JOIN "Barrios_Fontibon" b ON (b.topogeom).id = r.topogeo_id
+WHERE b.id = 10 AND r.layer_id = 1; -- Filtramos por el layer_id de los barrios</code></pre>
+            </div>
+            <p>Esta consulta nos mostrará una lista de todas las caras y aristas que conforman el polígono de ese barrio, demostrando cómo la TopoGeometría es en realidad una colección de referencias a elementos más simples.</p>
+
+        </article>
+        
+        <!-- ===== PIE DE PÁGINA ===== -->
+        <footer class="text-center mt-16 pt-8 border-t border-gray-300">
+            <p class="text-gray-600">&copy; 2024 Universidad Distrital Francisco José de Caldas. Todos los derechos reservados.</p>
+            <p class="text-sm text-gray-500 mt-1">Este material se distribuye bajo la licencia Creative Commons Atribución-CompartirIgual.</p>
+        </footer>
+    </div>
+    <script>
+        // Inicializa Highlight.js para resaltar todos los bloques de código
+        hljs.highlightAll();
+
+        // Agrega la funcionalidad de copiado a todos los botones
+        const copyButtons = document.querySelectorAll('.copy-button');
+        copyButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const pre = button.parentElement.querySelector('pre > code');
+                const textToCopy = pre.innerText;
+
+                // Usamos un textarea temporal para copiar el texto
+                const textArea = document.createElement('textarea');
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    button.innerText = 'Copiado!';
+                    button.classList.add('copied');
+                } catch (err) {
+                    console.error('Error al copiar el texto: ', err);
+                    button.innerText = 'Error';
+                }
+                document.body.removeChild(textArea);
+
+                // Revertir el texto del botón después de 2 segundos
+                setTimeout(() => {
+                    button.innerText = 'Copiar';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>

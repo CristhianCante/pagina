@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo: Relaciones Espaciales - Guía de PostGIS Bogotá</title>
+    <!-- Tailwind CSS para un diseño rápido y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilos para el contenido del artículo */
+        .article-content h2 {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 800; /* extrabold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2.5rem; /* mt-10 */
+            margin-bottom: 1rem; /* mb-4 */
+            border-bottom: 2px solid #e5e7eb; /* border-gray-200 */
+            padding-bottom: 0.5rem; /* pb-2 */
+        }
+        .article-content h3 {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 700; /* bold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2rem; /* mt-8 */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .article-content p, .article-content ul, .article-content ol {
+            font-size: 1.125rem; /* text-lg */
+            color: #374151; /* gray-700 */
+            line-height: 1.75;
+            margin-bottom: 1rem;
+        }
+        .article-content ul {
+            list-style-type: disc;
+            padding-left: 2rem;
+        }
+        .article-content a {
+            color: #2563eb; /* blue-600 */
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .article-content a:hover {
+            color: #1d4ed8; /* blue-800 */
+            text-decoration: underline;
+        }
+        .article-content code:not(.hljs) { /* Código inline */
+            background-color: #e5e7eb;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .code-block-container {
+            position: relative;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .copy-button {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background-color: #4b5563;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 1px solid #6b7280;
+        }
+        .copy-button:hover {
+            background-color: #374151;
+        }
+        .copy-button.copied {
+            background-color: #16a34a; /* green-600 */
+        }
+    </style>
+    <!-- Highlight.js para el resaltado de sintaxis SQL -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        <!-- ===== NAVEGACIÓN DE VUELTA ===== -->
+        <nav class="mb-6">
+            <a href="index.html" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200 text-lg">
+                &larr; Volver a la página principal de la guía
+            </a>
+        </nav>
+
+        <!-- ===== CABECERA DEL MÓDULO ===== -->
+        <header class="mb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-2">
+                Relaciones Espaciales
+            </h1>
+            <p class="text-xl text-gray-600">
+                Cómo describir e identificar los vínculos que existen entre diferentes geometrías.
+            </p>
+        </header>
+
+        <article class="bg-white p-6 sm:p-8 lg:p-12 rounded-xl shadow-md border border-gray-200 article-content">
+            
+            <h2>1. ¿Qué son las Relaciones Espaciales?</h2>
+            <p>
+                Las relaciones espaciales son vínculos que describen cómo interactúan dos o más geometrías en el espacio. Responden a preguntas como: ¿Está este punto dentro de este polígono? ¿Se cruza esta calle con este río? ¿Qué barrios colindan con este otro?
+            </p>
+            <p>
+                En PostGIS, estas relaciones se evalúan mediante funciones que, en su mayoría, devuelven un valor booleano (<code>true</code> o <code>false</code>) dependiendo de si la condición espacial se cumple o no.
+            </p>
+            <img src="imagenes/Relaciones espaciales/imagen1.png" alt="[Diagrama de diferentes relaciones espaciales como Within, Touches, Crosses y Overlaps]" class="w-full max-w-2xl mx-auto my-4 rounded-lg shadow-md border">
+
+            <h2>2. Funciones de Relaciones Espaciales</h2>
+            <p>Para los siguientes ejemplos, utilizaremos datos de la localidad de Suba en Bogotá.</p>
+            <p>Las funciones se pueden agrupar en tres categorías principales:</p>
+            
+            <h3>2.1. Relaciones de Contención</h3>
+            <p>Evalúan si una geometría está contenida o es igual a otra.</p>
+
+            <h4>ST_Contains(geomA, geomB)</h4>
+            <p>Devuelve <code>true</code> si la geometría A contiene completamente a la geometría B. Ninguna parte de B puede estar fuera de A.</p>
+            <p><strong>Ejemplo:</strong> ¿Cuáles incidentes ocurrieron dentro del barrio "EL PLAN"?</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT i.numero_in, i.servicio, b.nombre AS barrio
+FROM incidentes i, barrios b
+WHERE ST_Contains(b.geom, i.geom)
+  AND b.nombre = 'EL PLAN';</code></pre>
+            </div>
+            <img src="imagenes/Relaciones espaciales/imagen2.png" alt="[Resultado de la consulta ST_Contains mostrando puntos de incidentes dentro de un polígono de barrio]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+
+            <h4>ST_Within(geomA, geomB)</h4>
+            <p>Es la función opuesta a <code>ST_Contains</code>. Devuelve <code>true</code> si la geometría A está completamente contenida dentro de la geometría B.</p>
+            <p><strong>Ejemplo:</strong> ¿Cuáles calles están completamente dentro del barrio "TUNA RURAL"?</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT m.mvietiquet, m.mvinantigu, b.nombre AS barrio
+FROM malla_vial m, barrios b
+WHERE ST_Within(m.geom, b.geom)
+  AND b.nombre = 'TUNA RURAL';</code></pre>
+            </div>
+             <img src="imagenes/Relaciones espaciales/imagen3.png" alt="[Resultado de la consulta ST_Within mostrando segmentos de vía dentro de un polígono de barrio]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+
+            <h4>ST_Touches(geomA, geomB)</h4>
+            <p>Devuelve <code>true</code> si las geometrías se tocan en sus bordes, pero sus interiores no se intersectan.</p>
+            <p><strong>Ejemplo:</strong> ¿Qué barrios colindan (tocan) con el barrio "COSTA AZUL"?</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT b1.nombre
+FROM barrios AS b1, barrios AS b2
+WHERE ST_Touches(b1.geom, b2.geom)
+  AND b2.nombre = 'COSTA AZUL';</code></pre>
+            </div>
+            <img src="imagenes/Relaciones espaciales/imagen4.png" alt="[Resultado de la consulta ST_Touches mostrando los polígonos de barrios que tocan al barrio seleccionado]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+
+            <h4>ST_Equals(geomA, geomB)</h4>
+            <p>Devuelve <code>true</code> si ambas geometrías son espacialmente idénticas (tienen los mismos puntos y forma).</p>
+            <p><strong>Ejemplo:</strong> ¿Cuáles incidentes ocurrieron exactamente en el mismo lugar (aunque sean registros diferentes)?</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT e.id, e.servicio
+FROM incidentes AS e, incidentes AS c
+WHERE ST_Equals(e.geom, c.geom)
+  AND e.id <> c.id;</code></pre>
+            </div>
+
+            <h3>2.2. Relaciones de Intersección</h3>
+            <p>Evalúan si las geometrías comparten alguna porción de espacio.</p>
+
+            <h4>ST_Intersects(geomA, geomB)</h4>
+            <p>Es la función más utilizada. Devuelve <code>true</code> si las geometrías comparten cualquier porción de espacio, ya sea un punto, una línea o un área.</p>
+            <p><strong>Ejemplo:</strong> ¿Cuáles vías se intersectan con el barrio "SAN JOSE DE BAVARIA"?</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT m.mv_nombre, m.id AS id_vias
+FROM barrios b, malla_vial m
+WHERE ST_Intersects(b.geom, m.geom)
+  AND b.nombre = 'SAN JOSE DE BAVARIA';</code></pre>
+            </div>
+            <img src="imagenes/Relaciones espaciales/imagen5.png" alt="[Resultado de la consulta ST_Intersects mostrando las vías que cruzan un barrio]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+
+            <h4>ST_Disjoint(geomA, geomB)</h4>
+            <p>Es lo opuesto a <code>ST_Intersects</code>. Devuelve <code>true</code> si las geometrías no comparten ningún espacio en común (están separadas).</p>
+            <p><strong>Ejemplo:</strong> ¿Qué barrios no tienen ninguna colindancia con el barrio "EL PINO"?</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT no_colindantes.nombre
+FROM barrios AS el_pino, barrios AS no_colindantes
+WHERE ST_Disjoint(el_pino.geom, no_colindantes.geom)
+  AND el_pino.nombre = 'EL PINO';</code></pre>
+            </div>
+
+            <h4>ST_Crosses(geomA, geomB)</h4>
+            <p>Devuelve <code>true</code> si las geometrías se cruzan y la dimensión de la intersección es menor que la dimensión de al menos una de las geometrías. Típicamente se usa para ver si una línea cruza un polígono o si dos líneas se cruzan en un punto.</p>
+            <p><strong>Ejemplo:</strong> ¿Qué vías atraviesan el barrio "CIUDAD JARDIN NORTE"?</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT m.mv_nombre
+FROM barrios b, malla_vial m
+WHERE b.nombre = 'CIUDAD JARDIN NORTE'
+  AND ST_Crosses(b.geom, m.geom);</code></pre>
+            </div>
+
+            <h4>ST_Overlaps(geomA, geomB)</h4>
+            <p>Devuelve <code>true</code> si las geometrías se intersectan, tienen la misma dimensión, pero no son completamente iguales.</p>
+            <p><strong>Ejemplo:</strong> ¿Qué barrios se superponen con la localidad de SUBA (útil para encontrar barrios en el borde)?</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT b.nombre, l.locnombre
+FROM barrios b, localidad l
+WHERE ST_Overlaps(l.geom, b.geom)
+  AND l.locnombre = 'SUBA';</code></pre>
+            </div>
+
+            <h3>2.3. Relaciones de Distancia</h3>
+            
+            <h4>ST_Distance(geomA, geomB)</h4>
+            <p>Esta función es un poco diferente, ya que no devuelve un booleano, sino un número (<code>double precision</code>) que representa la distancia más corta entre dos geometrías, en las unidades de su SRID.</p>
+            <p><strong>Ejemplo:</strong> ¿Cuál es el incidente más cercano a la Avenida Carrera 104?</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT i.servicio, m.mvietiquet, i.geom
+FROM incidentes i, malla_vial m
+WHERE m.mvietiquet = 'Avenida Carrera 104'
+ORDER BY ST_Distance(m.geom, i.geom) ASC
+LIMIT 1;</code></pre>
+            </div>
+
+            <h4>ST_DWithin(geomA, geomB, distancia)</h4>
+            <p>Esta función sí es un predicado espacial. Devuelve <code>true</code> si las geometrías están a una distancia específica la una de la otra. Es mucho más eficiente que usar <code>ST_Distance</code> en una cláusula <code>WHERE</code> porque puede usar índices espaciales.</p>
+            <p><strong>Ejemplo:</strong> ¿Cuáles son los incidentes que ocurrieron a 100 metros o menos del barrio "SUBA URBANO"? (Nota: La distancia debe estar en las unidades del SRID).</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT i.id, i.servicio
+FROM incidentes i, barrios b
+WHERE b.nombre = 'SUBA URBANO'
+  AND ST_DWithin(b.geom, i.geom, 100);</code></pre>
+            </div>
+             <img src="imagenes/Relaciones espaciales/imagen6.png" alt="[Resultado de la consulta ST_Dwithin mostrando los puntos de incidentes dentro de un buffer o área de influencia de un barrio]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+
+        </article>
+        
+        <!-- ===== PIE DE PÁGINA ===== -->
+        <footer class="text-center mt-16 pt-8 border-t border-gray-300">
+            <p class="text-gray-600">&copy; 2024 Universidad Distrital Francisco José de Caldas. Todos los derechos reservados.</p>
+            <p class="text-sm text-gray-500 mt-1">Este material se distribuye bajo la licencia Creative Commons Atribución-CompartirIgual.</p>
+        </footer>
+    </div>
+    <script>
+        // Inicializa Highlight.js para resaltar todos los bloques de código
+        hljs.highlightAll();
+
+        // Agrega la funcionalidad de copiado a todos los botones
+        const copyButtons = document.querySelectorAll('.copy-button');
+        copyButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const pre = button.parentElement.querySelector('pre > code');
+                const textToCopy = pre.innerText;
+
+                // Usamos un textarea temporal para copiar el texto
+                const textArea = document.createElement('textarea');
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    button.innerText = 'Copiado!';
+                    button.classList.add('copied');
+                } catch (err) {
+                    console.error('Error al copiar el texto: ', err);
+                    button.innerText = 'Error';
+                }
+                document.body.removeChild(textArea);
+
+                // Revertir el texto del botón después de 2 segundos
+                setTimeout(() => {
+                    button.innerText = 'Copiar';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>

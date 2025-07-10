@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo: Creación, Cargue y Descripción de Datos - Guía de PostGIS Bogotá</title>
+    <!-- Tailwind CSS para un diseño rápido y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilos para el contenido del artículo */
+        .article-content h2 {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 800; /* extrabold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2.5rem; /* mt-10 */
+            margin-bottom: 1rem; /* mb-4 */
+            border-bottom: 2px solid #e5e7eb; /* border-gray-200 */
+            padding-bottom: 0.5rem; /* pb-2 */
+        }
+        .article-content h3 {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 700; /* bold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2rem; /* mt-8 */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .article-content p, .article-content ul, .article-content ol {
+            font-size: 1.125rem; /* text-lg */
+            color: #374151; /* gray-700 */
+            line-height: 1.75;
+            margin-bottom: 1rem;
+        }
+        .article-content ul {
+            list-style-type: disc;
+            padding-left: 2rem;
+        }
+        .article-content a {
+            color: #2563eb; /* blue-600 */
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .article-content a:hover {
+            color: #1d4ed8; /* blue-800 */
+            text-decoration: underline;
+        }
+        .article-content code:not(.hljs) { /* Código inline */
+            background-color: #e5e7eb;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .code-block-container {
+            position: relative;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .copy-button {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background-color: #4b5563;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 1px solid #6b7280;
+        }
+        .copy-button:hover {
+            background-color: #374151;
+        }
+        .copy-button.copied {
+            background-color: #16a34a; /* green-600 */
+        }
+        .styled-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        .styled-table th, .styled-table td {
+            border: 1px solid #d1d5db;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        .styled-table th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+        }
+        .styled-table tbody tr:nth-child(odd) {
+            background-color: #f9fafb;
+        }
+    </style>
+    <!-- Highlight.js para el resaltado de sintaxis SQL -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        <!-- ===== NAVEGACIÓN DE VUELTA ===== -->
+        <nav class="mb-6">
+            <a href="index.html" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200 text-lg">
+                &larr; Volver a la página principal de la guía
+            </a>
+        </nav>
+
+        <!-- ===== CABECERA DEL MÓDULO ===== -->
+        <header class="mb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-2">
+                Creación, Cargue y Descripción de Datos
+            </h1>
+            <p class="text-xl text-gray-600">
+                Unificando los pasos iniciales para preparar nuestro entorno de trabajo con datos de Bogotá.
+            </p>
+        </header>
+
+        <article class="bg-white p-6 sm:p-8 lg:p-12 rounded-xl shadow-md border border-gray-200 article-content">
+            
+            <h2>1. Creación de una Base de Datos Espacial</h2>
+            <p>
+                El primer paso en cualquier proyecto geoespacial es configurar una base de datos que pueda manejar información geográfica. Usaremos PostgreSQL con su extensión PostGIS. La herramienta gráfica <strong>pgAdmin</strong> nos facilitará este proceso.
+            </p>
+            
+            <h3>1.1. Creando la Base de Datos</h3>
+            <p>
+                Dentro de pgAdmin, nos conectamos a nuestro servidor y creamos una nueva base de datos. Para este ejemplo, la llamaremos <code>CHAPINERO</code>.
+            </p>
+            <img src="imagenes/Creación cargue y descripción de datos/imagen 1.png" alt="[Imagen de la ventana de creación de base de datos en pgAdmin]" class="w-full max-w-2xl mx-auto my-4 rounded-lg shadow-md border">
+            
+            <h3>1.2. Habilitando PostGIS</h3>
+            <p>
+                Una vez creada la base de datos, debemos habilitar las capacidades espaciales. Para ello, abrimos una ventana de consulta SQL para nuestra nueva base de datos y ejecutamos el siguiente comando:
+            </p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">CREATE EXTENSION postgis;</code></pre>
+            </div>
+            <p>
+                Este comando instala todas las funciones, tipos de datos y operadores espaciales que PostGIS ofrece. Para verificar que la instalación fue exitosa, podemos consultar la versión de PostGIS instalada:
+            </p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT postgis_full_version();</code></pre>
+            </div>
+            <p>Si todo está correcto, veremos un mensaje con los detalles de la versión de PostGIS y sus componentes (GEOS, Proj, etc.), confirmando que nuestra base de datos está lista para trabajar con datos espaciales.</p>
+            <img src="imagenes/Creación cargue y descripción de datos/imagen 2.png" alt="[Imagen de la activación de la extensión PostGIS y la verificación de la versión]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+
+            <h2>2. Carga de Datos Espaciales</h2>
+            <p>
+                Con la base de datos lista, el siguiente paso es poblarla con nuestros datos geográficos. Existen varios métodos para hacerlo.
+            </p>
+
+            <h3>2.1. ¿Qué es un Shapefile?</h3>
+            <p>
+                El formato <strong>Shapefile</strong> es uno de los estándares más comunes para distribuir datos vectoriales. Aunque lo llamamos "un archivo", en realidad es un conjunto de archivos que trabajan juntos. Los más importantes son:
+            </p>
+            <ul>
+                <li><code>.shp</code>: Almacena la geometría de las entidades (puntos, líneas o polígonos).</li>
+                <li><code>.shx</code>: Contiene un índice que acelera el acceso a las geometrías.</li>
+                <li><code>.dbf</code>: Una tabla en formato dBase que guarda los atributos de cada entidad.</li>
+                <li><code>.prj</code>: (Opcional pero crucial) Define el Sistema de Referencia de Coordenadas (SRC) de los datos.</li>
+            </ul>
+
+            <h3>2.2. Carga con herramientas de línea de comandos</h3>
+            <p>
+                Existen herramientas potentes como <code>shp2pgsql</code> y <code>ogr2ogr</code> que permiten cargar datos desde la terminal.
+            </p>
+            <p><strong>Usando shp2pgsql:</strong> Esta herramienta convierte un Shapefile en sentencias SQL. El siguiente comando carga un Shapefile de barrios, le asigna el SRID 26918 y crea un índice espacial.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-bash">shp2pgsql -D -I -s 26918 barrios_chapinero.shp public.barrios_chapinero | psql -d chapinero_db -U postgres</code></pre>
+            </div>
+            
+            <h3>2.3. Carga desde un archivo de respaldo (.backup)</h3>
+            <p>
+                Otra forma muy práctica es restaurar una base de datos desde un archivo de respaldo. En pgAdmin, se puede hacer clic derecho sobre la base de datos, seleccionar "Restore..." y elegir el archivo <code>.backup</code>. Esto cargará todas las tablas, datos y configuraciones contenidas en el respaldo.
+            </p>
+            <img src="imagenes/Creación cargue y descripción de datos/imagen 3.png" alt="[Imagen de la ventana de restauración de base de datos en pgAdmin]" class="w-full max-w-3xl mx-auto my-4 rounded-lg shadow-md border">
+            
+            <h3>2.4. Carga desde un cliente SIG como QGIS</h3>
+            <p>
+                También es posible conectarse a la base de datos PostGIS desde un software SIG de escritorio como QGIS. A través del "Administrador de bases de datos", se puede establecer una conexión y luego usar la función de "Importar capa/archivo" para cargar Shapefiles directamente a la base de datos de forma visual.
+            </p>
+             <img src="imagenes/Creación cargue y descripción de datos/imagen 4.png" alt="[Imagen del administrador de bases de datos en QGIS mostrando la importación de capas]" class="w-full max-w-4xl mx-auto my-4 rounded-lg shadow-md border">
+
+            <h2>3. Descripción de los Datos de Chapinero</h2>
+            <p>
+                Para nuestros ejercicios, hemos cargado un conjunto de datos de la localidad de Chapinero en Bogotá. A continuación, se describen las capas y sus atributos principales.
+            </p>
+            <img src="imagenes/Creación cargue y descripción de datos/imagen 5.png" alt="[Imagen de las capas de Chapinero cargadas en QGIS]" class="w-full max-w-4xl mx-auto my-4 rounded-lg shadow-md border">
+
+            <h3>3.1. Capa de Localidad (1 registro)</h3>
+            <p>Un único polígono que representa el límite administrativo de la localidad de Chapinero.</p>
+            <table class="styled-table">
+                <thead><tr><th>Atributo</th><th>Descripción</th></tr></thead>
+                <tbody>
+                    <tr><td><code>LocNombre</code></td><td>Nombre de la localidad (ej. 'Chapinero').</td></tr>
+                    <tr><td><code>LocArea</code></td><td>Área de la localidad en unidades del SRC.</td></tr>
+                    <tr><td><code>SHAPE_Leng</code></td><td>Longitud del perímetro de la geometría.</td></tr>
+                    <tr><td><code>SHAPE_Area</code></td><td>Área total de la geometría.</td></tr>
+                </tbody>
+            </table>
+
+            <h3>3.2. Capa de Barrios (115 registros)</h3>
+            <p>Polígonos que representan los barrios dentro de la localidad.</p>
+            <table class="styled-table">
+                <thead><tr><th>Atributo</th><th>Descripción</th></tr></thead>
+                <tbody>
+                    <tr><td><code>barriocomu</code></td><td>Nombre del barrio o comunidad.</td></tr>
+                    <tr><td><code>cod_loc</code></td><td>Código único de la localidad a la que pertenece.</td></tr>
+                    <tr><td><code>localidad</code></td><td>Nombre de la localidad.</td></tr>
+                    <tr><td><code>estado</code></td><td>Estado de legalización del barrio (ej. 'LEGALIZADO').</td></tr>
+                </tbody>
+            </table>
+
+            <h3>3.3. Capa de Malla Vial (3841 registros)</h3>
+            <p>Líneas que representan los segmentos de la malla vial de la localidad.</p>
+            <table class="styled-table">
+                <thead><tr><th>Atributo</th><th>Descripción</th></tr></thead>
+                <tbody>
+                    <tr><td><code>MVITIPO</code></td><td>Tipo de vía (ej. 'AK' para Avenida Carrera, 'CL' para Calle).</td></tr>
+                    <tr><td><code>MVINOMBRE</code></td><td>Nombre oficial o común de la vía.</td></tr>
+                    <tr><td><code>MVIACAL</code></td><td>Área de la calzada en metros cuadrados.</td></tr>
+                    <tr><td><code>Shape_Len</code></td><td>Longitud geométrica del segmento de vía.</td></tr>
+                </tbody>
+            </table>
+            
+            <h3>3.4. Capa de Incidentes (1155 registros)</h3>
+            <p>Puntos que marcan la ubicación de diferentes tipos de incidentes reportados.</p>
+            <table class="styled-table">
+                <thead><tr><th>Atributo</th><th>Descripción</th></tr></thead>
+                <tbody>
+                    <tr><td><code>FECHA</code></td><td>Fecha en que ocurrió el incidente.</td></tr>
+                    <tr><td><code>ESTACION</code></td><td>Nombre de la estación que registró el incidente.</td></tr>
+                    <tr><td><code>CLASE_VEHI</code></td><td>Tipo de vehículo involucrado (si aplica).</td></tr>
+                    <tr><td><code>CAUSAS</code></td><td>Descripción general de la causa del incidente.</td></tr>
+                </tbody>
+            </table>
+
+        </article>
+        
+        <!-- ===== PIE DE PÁGINA ===== -->
+        <footer class="text-center mt-16 pt-8 border-t border-gray-300">
+            <p class="text-gray-600">&copy; 2024 Universidad Distrital Francisco José de Caldas. Todos los derechos reservados.</p>
+            <p class="text-sm text-gray-500 mt-1">Este material se distribuye bajo la licencia Creative Commons Atribución-CompartirIgual.</p>
+        </footer>
+    </div>
+    <script>
+        // Inicializa Highlight.js para resaltar todos los bloques de código
+        hljs.highlightAll();
+
+        // Agrega la funcionalidad de copiado a todos los botones
+        const copyButtons = document.querySelectorAll('.copy-button');
+        copyButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const pre = button.parentElement.querySelector('pre > code');
+                const textToCopy = pre.innerText;
+
+                // Usamos un textarea temporal para copiar el texto
+                const textArea = document.createElement('textarea');
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    button.innerText = 'Copiado!';
+                    button.classList.add('copied');
+                } catch (err) {
+                    console.error('Error al copiar el texto: ', err);
+                    button.innerText = 'Error';
+                }
+                document.body.removeChild(textArea);
+
+                // Revertir el texto del botón después de 2 segundos
+                setTimeout(() => {
+                    button.innerText = 'Copiar';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>

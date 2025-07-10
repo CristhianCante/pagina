@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo: Modelo DE-9IM - Guía de PostGIS Bogotá</title>
+    <!-- Tailwind CSS para un diseño rápido y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilos para el contenido del artículo */
+        .article-content h2 {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: 800; /* extrabold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2.5rem; /* mt-10 */
+            margin-bottom: 1rem; /* mb-4 */
+            border-bottom: 2px solid #e5e7eb; /* border-gray-200 */
+            padding-bottom: 0.5rem; /* pb-2 */
+        }
+        .article-content h3 {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 700; /* bold */
+            color: #1f2937; /* gray-800 */
+            margin-top: 2rem; /* mt-8 */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .article-content p, .article-content ul, .article-content ol {
+            font-size: 1.125rem; /* text-lg */
+            color: #374151; /* gray-700 */
+            line-height: 1.75;
+            margin-bottom: 1rem;
+        }
+        .article-content ul {
+            list-style-type: disc;
+            padding-left: 2rem;
+        }
+        .article-content a {
+            color: #2563eb; /* blue-600 */
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .article-content a:hover {
+            color: #1d4ed8; /* blue-800 */
+            text-decoration: underline;
+        }
+        .article-content code:not(.hljs) { /* Código inline */
+            background-color: #e5e7eb;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .code-block-container {
+            position: relative;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .copy-button {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background-color: #4b5563;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 1px solid #6b7280;
+        }
+        .copy-button:hover {
+            background-color: #374151;
+        }
+        .copy-button.copied {
+            background-color: #16a34a; /* green-600 */
+        }
+        .styled-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        .styled-table th, .styled-table td {
+            border: 1px solid #d1d5db;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        .styled-table th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+        }
+        .styled-table tbody tr:nth-child(odd) {
+            background-color: #f9fafb;
+        }
+    </style>
+    <!-- Highlight.js para el resaltado de sintaxis SQL -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        <!-- ===== NAVEGACIÓN DE VUELTA ===== -->
+        <nav class="mb-6">
+            <a href="index.html" class="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200 text-lg">
+                &larr; Volver a la página principal de la guía
+            </a>
+        </nav>
+
+        <!-- ===== CABECERA DEL MÓDULO ===== -->
+        <header class="mb-12">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-2">
+                Modelo de Intersección de 9 Dimensiones (DE-9IM)
+            </h1>
+            <p class="text-xl text-gray-600">
+                El motor topológico detrás de las relaciones espaciales en PostGIS.
+            </p>
+        </header>
+
+        <article class="bg-white p-6 sm:p-8 lg:p-12 rounded-xl shadow-md border border-gray-200 article-content">
+            
+            <h2>1. ¿Qué es el Modelo DE-9IM?</h2>
+            <p>
+                El <strong>Dimensionally Extended 9-Intersection Model (DE-9IM)</strong> es un modelo matemático que describe de forma precisa y estandarizada la relación espacial entre dos geometrías. Es la base teórica sobre la que se construyen la mayoría de las funciones de relaciones espaciales en PostGIS, como <code>ST_Intersects</code>, <code>ST_Contains</code>, etc.
+            </p>
+            <p>
+                El modelo funciona comparando las tres partes de una geometría (Interior, Límite y Exterior) con las tres partes de otra, generando una matriz de 3x3 que describe el resultado de estas nueve intersecciones.
+            </p>
+
+            <h3>1.1. Interior, Límite y Exterior de una Geometría</h3>
+            <p>Para entender el modelo, primero debemos definir las tres partes de cualquier geometría:</p>
+            <ul>
+                <li><strong>Interior:</strong> El conjunto de puntos "dentro" de la geometría, sin incluir su borde.</li>
+                <li><strong>Límite (Boundary):</strong> El conjunto de puntos que separan el interior del exterior.</li>
+                <li><strong>Exterior:</strong> Todo el espacio que no es parte de la geometría (ni su interior ni su límite).</li>
+            </ul>
+            <p>La definición de estas partes varía según el tipo de geometría:</p>
+            <table class="styled-table">
+                <thead><tr><th>Tipo de Geometría</th><th>Interior</th><th>Límite (Boundary)</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>Punto</strong></td><td>El propio punto.</td><td>Vacío (no tiene límite).</td></tr>
+                    <tr><td><strong>Línea</strong></td><td>Los puntos de la línea, excepto los extremos.</td><td>Los puntos de inicio y fin de la línea.</td></tr>
+                    <tr><td><strong>Polígono</strong></td><td>El área encerrada por el anillo exterior.</td><td>Los anillos (exterior e interiores) que definen el polígono.</td></tr>
+                </tbody>
+            </table>
+
+            <h2>2. La Matriz de Intersección 3x3</h2>
+            <p>
+                El modelo DE-9IM representa la relación entre dos geometrías, A y B, mediante una matriz que muestra la <strong>dimensión</strong> del resultado de la intersección de cada una de sus partes.
+            </p>
+            <img src="imagenes/DE9IM/imagen1.png" alt="[Diagrama visual del modelo DE-9IM, mostrando la intersección de Interior, Límite y Exterior de dos polígonos superpuestos]" class="w-full max-w-2xl mx-auto my-4 rounded-lg shadow-md border">
+            <p>La matriz resultante contiene la dimensión de cada intersección:</p>
+            <ul>
+                <li><strong>2:</strong> La intersección es un área (polígono).</li>
+                <li><strong>1:</strong> La intersección es una línea.</li>
+                <li><strong>0:</strong> La intersección es un punto.</li>
+                <li><strong>F:</strong> La intersección es vacía (False).</li>
+            </ul>
+            <p>En PostGIS, esta matriz se representa como una cadena de 9 caracteres. Por ejemplo, la cadena para la intersección de dos polígonos que se solapan (como en la imagen) sería <code>212101212</code>.</p>
+
+            <h2>3. El Vínculo entre DE-9IM y las Funciones Espaciales</h2>
+            <p>
+                Cada función de relación espacial (predicado) que usamos en PostGIS, como <code>ST_Contains</code> o <code>ST_Touches</code>, puede ser definida por uno o más patrones de matriz DE-9IM.
+            </p>
+            <p>En estos patrones, se usan caracteres especiales para búsquedas flexibles:</p>
+            <ul>
+                <li><strong>T:</strong> La intersección existe (dimensión 0, 1 o 2).</li>
+                <li><strong>F:</strong> La intersección no existe (dimensión -1, vacía).</li>
+                <li><strong>*:</strong> No importa el resultado de la intersección.</li>
+            </ul>
+            <p>A continuación, se muestran los patrones DE-9IM para algunas de las funciones más comunes:</p>
+            <table class="styled-table">
+                <thead><tr><th>Predicado Espacial</th><th>Patrón de Matriz DE-9IM</th><th>Definición</th></tr></thead>
+                <tbody>
+                    <tr><td><code>ST_Equals</code></td><td><code>T*F**FFF*</code></td><td>Sus interiores se intersecan, y ninguna parte de una geometría intersecta el exterior de la otra.</td></tr>
+                    <tr><td><code>ST_Disjoint</code></td><td><code>FF*FF****</code></td><td>Ni los interiores ni los límites se intersectan. Están completamente separadas.</td></tr>
+                    <tr><td><code>ST_Contains</code></td><td><code>T*****FF*</code></td><td>El interior de A intersecta el interior de B, pero el interior de B no intersecta el exterior de A.</td></tr>
+                    <tr><td><code>ST_Within</code></td><td><code>T*F**F***</code></td><td>Es la relación inversa a ST_Contains.</td></tr>
+                    <tr><td><code>ST_Touches</code></td><td><code>FT*******</code>, <code>F**T*****</code>, o <code>F***T****</code></td><td>Los interiores no se intersectan, pero los límites sí.</td></tr>
+                    <tr><td><code>ST_Intersects</code></td><td><code>T********</code>, <code>*T*******</code>, <code>***T*****</code>, o <code>****T****</code></td><td>La definición más general. Se cumple si al menos una de las 9 intersecciones no es vacía.</td></tr>
+                </tbody>
+            </table>
+
+            <h2>4. Funciones DE-9IM en PostGIS</h2>
+            <p>PostGIS nos permite trabajar directamente con este modelo a través de la función <code>ST_Relate</code>.</p>
+            
+            <h3>4.1. `ST_Relate(geomA, geomB)`</h3>
+            <p>Esta función devuelve la cadena de 9 caracteres de la matriz DE-9IM que describe la relación entre dos geometrías.</p>
+            <p><strong>Ejemplo:</strong> ¿Cuál es la relación entre la localidad de Kennedy y uno de sus barrios?</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">SELECT ST_Relate(k.geom, b.geom)
+FROM kennedy k, barrios b
+WHERE b.nombre = 'VILLA ALSACIA II' 
+LIMIT 1;</code></pre>
+            </div>
+            <p>Esto podría devolver <code>212FF1FF2</code>, que nos dice, entre otras cosas, que el interior del barrio no se intersecta con el exterior de la localidad (FF en las posiciones 6 y 9).</p>
+
+            <h3>4.2. `ST_Relate(geomA, geomB, patron)`</h3>
+            <p>Esta versión de la función es booleana. Devuelve <code>true</code> si la matriz DE-9IM de las geometrías coincide con el patrón que le pasamos.</p>
+            <p><strong>Ejemplo:</strong> Comprobar si un barrio está contenido en la localidad de Kennedy usando el patrón DE-9IM de `ST_Within`.</p>
+            <div class="code-block-container">
+                <button class="copy-button">Copiar</button>
+                <pre><code class="language-sql">-- Contar cuántos barrios cumplen con el patrón de 'within' para la localidad de Kennedy
+SELECT COUNT(*)
+FROM barrios b
+JOIN kennedy k ON ST_Relate(b.geom, k.geom, 'T*F**F***');</code></pre>
+            </div>
+            <p>Esta consulta es funcionalmente equivalente a usar <code>ST_Within(b.geom, k.geom)</code>, pero nos permite crear relaciones espaciales personalizadas y muy específicas si las funciones estándar no son suficientes.</p>
+
+        </article>
+        
+        <!-- ===== PIE DE PÁGINA ===== -->
+        <footer class="text-center mt-16 pt-8 border-t border-gray-300">
+            <p class="text-gray-600">&copy; 2024 Universidad Distrital Francisco José de Caldas. Todos los derechos reservados.</p>
+            <p class="text-sm text-gray-500 mt-1">Este material se distribuye bajo la licencia Creative Commons Atribución-CompartirIgual.</p>
+        </footer>
+    </div>
+    <script>
+        // Inicializa Highlight.js para resaltar todos los bloques de código
+        hljs.highlightAll();
+
+        // Agrega la funcionalidad de copiado a todos los botones
+        const copyButtons = document.querySelectorAll('.copy-button');
+        copyButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const pre = button.parentElement.querySelector('pre > code');
+                const textToCopy = pre.innerText;
+
+                // Usamos un textarea temporal para copiar el texto
+                const textArea = document.createElement('textarea');
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    button.innerText = 'Copiado!';
+                    button.classList.add('copied');
+                } catch (err) {
+                    console.error('Error al copiar el texto: ', err);
+                    button.innerText = 'Error';
+                }
+                document.body.removeChild(textArea);
+
+                // Revertir el texto del botón después de 2 segundos
+                setTimeout(() => {
+                    button.innerText = 'Copiar';
+                    button.classList.remove('copied');
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>
